@@ -40,3 +40,9 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# Local resources for development
+/src/resources/images/
+/src/resources/test-data/
+/src/resources/*.xlsx
+/src/resources/inventory.json
