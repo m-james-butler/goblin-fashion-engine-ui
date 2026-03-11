@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { RulesService } from './rules.service';
+import { HoardService } from './hoard.service';
 
-describe('RulesService', () => {
-  let service: RulesService;
+describe('HoardService', () => {
+  let service: HoardService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(RulesService);
+    service = TestBed.inject(HoardService);
   });
 
   it('should be created', () => {
