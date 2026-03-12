@@ -1,1 +1,211 @@
-<p>hoard-view works!</p>
+<div class="hoard-view">
+  @if (isLoading) {
+    <div class="state-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading shinies...</p>
+    </div>
+  } @else if (errorMessage) {
+    <div class="state-container error">
+      <h2>Hoard unavailable</h2>
+      <p>{{ errorMessage }}</p>
+    </div>
+  } @else {
+    <div class="table-header">
+      <h1>Hoard View</h1>
+      <p>{{ filteredShinies.length }} shinies</p>
+    </div>
+
+    @if (shinies.length === 0) {
+      <p>No shinies found in the current hoard.</p>
+    } @else {
+      <div class="filters">
+        <label class="filter-field" for="category-filter">
+          <span>Category</span>
+          <select
+            id="category-filter"
+            [value]="filters.category"
+            (change)="onFilterChange('category', $event)"
+          >
+            <option value="">All</option>
+            @for (option of categoryOptions; track option) {
+              <option [value]="option">{{ option }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="filter-field" for="context-filter">
+          <span>Context</span>
+          <select
+            id="context-filter"
+            [value]="filters.context"
+            (change)="onFilterChange('context', $event)"
+          >
+            <option value="">All</option>
+            @for (option of contextOptions; track option) {
+              <option [value]="option">{{ option }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="filter-field" for="status-filter">
+          <span>Status</span>
+          <select
+            id="status-filter"
+            [value]="filters.status"
+            (change)="onFilterChange('status', $event)"
+          >
+            <option value="">All</option>
+            @for (option of statusOptions; track option) {
+              <option [value]="option">{{ option }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="filter-field" for="color-filter">
+          <span>Color</span>
+          <select
+            id="color-filter"
+            [value]="filters.color"
+            (change)="onFilterChange('color', $event)"
+          >
+            <option value="">All</option>
+            @for (option of colorOptions; track option) {
+              <option [value]="option">{{ option }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      <div class="table-wrapper">
+        <table
+          mat-table
+          [dataSource]="filteredShinies"
+          matSort
+          (matSortChange)="onSortChange($event)"
+          class="hoard-table"
+        >
+          <ng-container matColumnDef="image">
+            <th mat-header-cell *matHeaderCellDef>Image</th>
+            <td mat-cell *matCellDef="let shiny">
+              <div class="image-cell-content">
+                @if (shiny.imagePath) {
+                  <button
+                    type="button"
+                    class="image-button"
+                    (click)="openImageModal(shiny)"
+                  >
+                    <img
+                      class="shiny-image"
+                      [src]="shiny.imagePath"
+                      [alt]="shiny.filename || shiny.id"
+                    />
+                  </button>
+                } @else {
+                  <i class="fa-regular fa-image image-fallback-icon" aria-hidden="true"></i>
+                }
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let shiny">{{ shiny.id }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="category">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="category">
+              Category
+            </th>
+            <td mat-cell *matCellDef="let shiny">{{ shiny.category }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="subcategory">
+            <th mat-header-cell *matHeaderCellDef>Subcategory</th>
+            <td mat-cell *matCellDef="let shiny">{{ shiny.subcategory }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="context">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="context">
+              Context
+            </th>
+            <td mat-cell *matCellDef="let shiny">{{ shiny.primaryContext }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="layer">
+            <th mat-header-cell *matHeaderCellDef>Layer</th>
+            <td mat-cell *matCellDef="let shiny">{{ shiny.layer }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="color">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="color">
+              Color
+            </th>
+            <td mat-cell *matCellDef="let shiny">{{ shiny.colorPrimary }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="pattern">
+            <th mat-header-cell *matHeaderCellDef>Pattern</th>
+            <td mat-cell *matCellDef="let shiny">{{ shiny.pattern || '-' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="fabric">
+            <th mat-header-cell *matHeaderCellDef>Fabric</th>
+            <td mat-cell *matCellDef="let shiny">{{ shiny.fabric || '-' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="status">
+              Status
+            </th>
+            <td mat-cell *matCellDef="let shiny">{{ shiny.status }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="notes">
+            <th mat-header-cell *matHeaderCellDef>Notes</th>
+            <td mat-cell *matCellDef="let shiny">
+              <span
+                class="notes-cell"
+                [matTooltip]="shiny.notes || ''"
+                [matTooltipDisabled]="!shiny.notes"
+              >
+                {{ shiny.notes || '-' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+
+      @if (selectedImagePath) {
+        <div class="image-modal-backdrop" (click)="closeImageModal()">
+          <div class="image-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h2 class="modal-title">{{ selectedShiny?.id }}</h2>
+              <button
+                type="button"
+                class="modal-close"
+                aria-label="Close image preview"
+                (click)="closeImageModal()"
+              >
+                Close
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="modal-meta">
+                <span>{{ selectedShiny?.category }}</span>
+                <span>{{ selectedShiny?.subcategory }}</span>
+                <span>{{ selectedShiny?.colorPrimary }}</span>
+              </div>
+              <div class="modal-notes">
+                {{ selectedShiny?.notes || 'No notes available.' }}
+              </div>
+              <img [src]="selectedImagePath" [alt]="selectedImageAlt" />
+            </div>
+          </div>
+        </div>
+      }
+    }
+  }
+</div>

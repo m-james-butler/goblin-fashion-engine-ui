@@ -1,10 +1,12 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { AppComponent } from './app.component';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
+      providers: [provideRouter([])],
     }).compileComponents();
   });
 
@@ -14,16 +16,17 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it(`should have the 'goblin-fashion-engine-ui' title`, () => {
+  it(`should have the 'Goblin Fashion Engine' title`, () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.title).toEqual('goblin-fashion-engine-ui');
+    expect(app.title).toEqual('Goblin Fashion Engine');
   });
 
-  it('should render title', () => {
+  it('should render header with Hoard View link', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, goblin-fashion-engine-ui');
+    expect(compiled.querySelector('.brand')?.textContent).toContain('Goblin Fashion Engine');
+    expect(compiled.textContent).toContain('Hoard View');
   });
 });

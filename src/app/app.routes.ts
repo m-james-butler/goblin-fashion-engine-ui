@@ -7,6 +7,7 @@ import { QuirkLogicComponent } from './features/rules/quirk-logic/quirk-logic.co
 export const routes: Routes = [
   { path: '', component: DashboardPageComponent },
   { path: 'inventory', component: HoardViewComponent },
+  { path: 'hoard', redirectTo: 'inventory', pathMatch: 'full' },
   { path: 'outfits', component: ClutterMashComponent },
   { path: 'rules', component: QuirkLogicComponent },
 ];
