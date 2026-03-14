@@ -46,3 +46,4 @@ Thumbs.db
 /src/resources/test-data/
 /src/resources/*.xlsx
 /src/resources/inventory.json
+package-lock.json
