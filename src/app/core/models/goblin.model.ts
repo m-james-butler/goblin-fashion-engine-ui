@@ -1,5 +1,11 @@
 export interface Goblin {
   id: string;
-  name: string;
-  hoardId: string;
+
+  displayName: string;
+  email?: string;
+
+  defaultHoardId: string;
+
+  createdAt?: string;
+  updatedAt?: string;
 }

@@ -1,24 +1,51 @@
+import {
+  AttentionLevel,
+  Color,
+  Context,
+  EngineInclusionPolicy,
+  Formality,
+  Layer,
+  Pattern,
+  ShinyCategory,
+  ShinyStatus,
+} from './enums';
+
 export interface Shiny {
   id: string;
+  goblinId: string;
+  hoardId: string;
+
+  name?: string;
+  filename?: string;
+  notes?: string;
+
   count: number;
-  category: string;
-  subcategory: string;
-  filename: string;
-  primaryContext: string;
-  secondaryContext: string | null;
-  formality: string;
-  warmth: number;
-  layer: string;
-  colorPrimary: string;
-  colorSecondary: string | null;
-  pattern: string | null;
-  fabric: string | null;
-  fit: string | null;
+
+  category: ShinyCategory;
+  subcategory?: string;
+  layer: Layer;
+
+  contexts: Context[];
+  formality: Formality;
+  attention: AttentionLevel;
+
+  colorPrimary: Color;
+  colorSecondary?: Color;
+  pattern?: Pattern;
+
+  fabric?: string;
+  fit?: string;
+
+  warmth?: number;
+
   officeOk: boolean;
   publicWear: boolean;
-  imagePath: string | null;
   includeInEngine: boolean;
-  status: string;
-  notes: string | null;
-  attentionLevel: string | null;
+  engineInclusionPolicy: EngineInclusionPolicy;
+
+  imagePath?: string;
+  status: ShinyStatus;
+
+  createdAt?: string;
+  updatedAt?: string;
 }
