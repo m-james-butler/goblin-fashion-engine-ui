@@ -1,59 +1,67 @@
-# GoblinFashionEngineUi
+# Goblin Fashion Engine UI
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.22.
+Goblin Fashion Engine UI is an Angular 19 application for exploring and managing a wardrobe inventory ("shinies").
 
-## Development server
+Current implemented focus:
+- Hoard inventory table view
+- Filter and sort controls
+- Image thumbnail preview modal
+- Firebase app initialization for auth/database/storage integration
 
-To start a local development server, run:
+## Tech Stack
+- Angular 19 (standalone components)
+- TypeScript
+- Angular Material
+- RxJS
+- Firebase Web SDK
+- Karma/Jasmine unit testing
 
-```bash
-ng serve
-```
+## Project Structure
+- `src/app/features` - route-level feature pages (`dashboard`, `inventory`, `outfits`, `rules`)
+- `src/app/core` - shared services, models, auth, and Firebase initialization
+- `src/environments` - environment config, including Firebase client config
+- `src/resources` - static app resources (inventory/images)
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
+## Run Locally
+Install dependencies:
 
 ```bash
-ng build
+npm install
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+Start dev server:
 
 ```bash
-ng test
+npm start
 ```
 
-## Running end-to-end tests
+App URL:
+- `http://localhost:4200/`
 
-For end-to-end (e2e) testing, run:
-
+## Build
 ```bash
-ng e2e
+npm run build
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## Test
+```bash
+npm test
+```
 
-## Additional Resources
+## Firebase Configuration and Security
+Firebase client configuration in this repo is intentionally public.
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- Config location: `src/environments/environments.ts`
+- Usage: `src/app/core/firebase/firebase.ts`
+
+This is expected for Firebase web apps. These values identify the Firebase project, but they do not grant privileged access by themselves.
+
+Actual data and operation access must be enforced with:
+- Firebase Authentication
+- Firestore Security Rules
+- Storage Security Rules
+
+Security depends on rules and auth, not on hiding client config in frontend code.
+
+## Additional Documentation
+- Architecture reference: `docs/application-architecture.md`

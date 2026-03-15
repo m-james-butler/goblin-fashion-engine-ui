@@ -1,4 +1,11 @@
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+
 /* You can add global styles to this file, and also import other style files */
 
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background: var(--mat-sys-surface, #303030);
+  color: var(--mat-sys-on-surface, #ffffff);
+}
