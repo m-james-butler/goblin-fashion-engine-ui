@@ -21,15 +21,14 @@ export enum Context {
   FESTIVAL = 'FESTIVAL',
   VACATION = 'VACATION',
   DATE = 'DATE',
-  EVENT = 'EVENT',
 }
 
 /* =========================================
-   ATTENTION LEVEL
+   ATTENTION
    How visually noticeable an item is
 ========================================= */
 
-export enum AttentionLevel {
+export enum Attention {
   LOW = 'LOW',
   MEDIUM = 'MEDIUM',
   HIGH = 'HIGH',
@@ -176,8 +175,9 @@ export enum Pattern {
 
 export enum ClutterSource {
   MANUAL = 'MANUAL',
-  RULE_ENGINE = 'RULE_ENGINE',
-  AI_GENERATED = 'AI_GENERATED',
+  ENGINE = 'ENGINE',
+  AI = 'AI',
+  IMPORTED = 'IMPORTED',
 }
 
 /* =========================================
@@ -185,9 +185,10 @@ export enum ClutterSource {
 ========================================= */
 
 export enum ClutterStatus {
-  DRAFT = 'DRAFT',
   ACTIVE = 'ACTIVE',
   ARCHIVED = 'ARCHIVED',
+  DRAFT = 'DRAFT',
+  DELETED = 'DELETED',
 }
 
 /* =========================================
@@ -198,14 +199,14 @@ export enum ClutterStatus {
 export enum ClutterItemRole {
   TOP = 'TOP',
   BOTTOM = 'BOTTOM',
-  DRESS = 'DRESS',
-  OUTER = 'OUTER',
+  ONE_PIECE = 'ONE_PIECE',
+  OUTERWEAR = 'OUTERWEAR',
   SHOES = 'SHOES',
-  BAG = 'BAG',
   ACCESSORY = 'ACCESSORY',
+  BAG = 'BAG',
   JEWELLERY = 'JEWELLERY',
   UNDERLAYER = 'UNDERLAYER',
-  LEGS = 'LEGS',
+  LEGWEAR = 'LEGWEAR',
   OTHER = 'OTHER',
 }
 
@@ -214,31 +215,35 @@ export enum ClutterItemRole {
 ========================================= */
 
 export enum QuirkScopeType {
+  GLOBAL = 'GLOBAL',
   GOBLIN = 'GOBLIN',
   HOARD = 'HOARD',
+  ITEM = 'ITEM',
 }
 
 export enum QuirkRuleType {
-  DISALLOW = 'DISALLOW',
   REQUIRE = 'REQUIRE',
+  FORBID = 'FORBID',
   PREFER = 'PREFER',
-  AVOID = 'AVOID',
+  EXCLUDE = 'EXCLUDE',
   LIMIT = 'LIMIT',
-  SCORE_BONUS = 'SCORE_BONUS',
-  SCORE_PENALTY = 'SCORE_PENALTY',
 }
 
 export enum QuirkOperator {
-  EQ = 'eq',
-  NEQ = 'neq',
-  CONTAINS = 'contains',
-  NOT_CONTAINS = 'not_contains',
-  IN = 'in',
-  NOT_IN = 'not_in',
-  GTE = 'gte',
-  LTE = 'lte',
+  EQUALS = 'EQUALS',
+  NOT_EQUALS = 'NOT_EQUALS',
+  GREATER_THAN = 'GREATER_THAN',
+  LESS_THAN = 'LESS_THAN',
+  CONTAINS = 'CONTAINS',
+  NOT_CONTAINS = 'NOT_CONTAINS',
+  IN = 'IN',
+  NOT_IN = 'NOT_IN',
 }
 
-export function enumValues<T>(enumObj: T): string[] {
-  return Object.values(enumObj as any);
+export function enumValues<T extends Record<string, string | number>>(
+  enumObj: T,
+): string[] {
+  return Object.values(enumObj).filter(
+    (value): value is string => typeof value === 'string',
+  );
 }

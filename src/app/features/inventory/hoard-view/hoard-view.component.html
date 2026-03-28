@@ -24,7 +24,7 @@
           <select
             id="category-filter"
             [value]="filters.category"
-            (change)="onFilterChange('category', $event)"
+            (change)="applyFilterSelection('category', $event)"
           >
             <option value="">All</option>
             @for (option of categoryOptions; track option) {
@@ -38,7 +38,7 @@
           <select
             id="context-filter"
             [value]="filters.context"
-            (change)="onFilterChange('context', $event)"
+            (change)="applyFilterSelection('context', $event)"
           >
             <option value="">All</option>
             @for (option of contextOptions; track option) {
@@ -52,7 +52,7 @@
           <select
             id="status-filter"
             [value]="filters.status"
-            (change)="onFilterChange('status', $event)"
+            (change)="applyFilterSelection('status', $event)"
           >
             <option value="">All</option>
             @for (option of statusOptions; track option) {
@@ -66,7 +66,7 @@
           <select
             id="color-filter"
             [value]="filters.color"
-            (change)="onFilterChange('color', $event)"
+            (change)="applyFilterSelection('color', $event)"
           >
             <option value="">All</option>
             @for (option of colorOptions; track option) {
@@ -81,7 +81,7 @@
           mat-table
           [dataSource]="filteredShinies"
           matSort
-          (matSortChange)="onSortChange($event)"
+          (matSortChange)="applySortOrder($event)"
           class="hoard-table"
         >
           <ng-container matColumnDef="image">
@@ -128,7 +128,7 @@
             <th mat-header-cell *matHeaderCellDef mat-sort-header="context">
               Context
             </th>
-            <td mat-cell *matCellDef="let shiny">{{ shiny.primaryContext }}</td>
+            <td mat-cell *matCellDef="let shiny">{{ shiny.contexts[0] || '-' }}</td>
           </ng-container>
 
           <ng-container matColumnDef="layer">

@@ -1,4 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  OnInit,
+  inject,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSortModule, Sort } from '@angular/material/sort';
@@ -14,6 +22,7 @@ type SortKey = '' | 'category' | 'context' | 'status' | 'color';
 @Component({
   selector: 'app-hoard-view',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
     MatProgressSpinnerModule,
@@ -25,12 +34,16 @@ type SortKey = '' | 'category' | 'context' | 'status' | 'color';
   styleUrl: './hoard-view.component.scss',
 })
 export class HoardViewComponent implements OnInit {
+  private readonly hoardService = inject(HoardService);
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
+
   shinies: Shiny[] = [];
   filteredShinies: Shiny[] = [];
-  isLoading: boolean = true;
+  isLoading = true;
   errorMessage: string | null = null;
   selectedImagePath: string | null = null;
-  selectedImageAlt: string = '';
+  selectedImageAlt = '';
   selectedShiny: Shiny | null = null;
   sortState: Sort = { active: '', direction: '' };
   filters: Record<FilterKey, string> = {
@@ -43,7 +56,7 @@ export class HoardViewComponent implements OnInit {
   contextOptions: string[] = [];
   statusOptions: string[] = [];
   colorOptions: string[] = [];
-  displayedColumns: string[] = [
+  readonly displayedColumns: string[] = [
     'image',
     'name',
     'category',
@@ -57,37 +70,40 @@ export class HoardViewComponent implements OnInit {
     'notes',
   ];
 
-  constructor(private readonly hoardService: HoardService) {
-    //intentionally left blank
-  }
   ngOnInit(): void {
     this.loadShinies();
   }
 
   private loadShinies(): void {
-    this.hoardService.getShiniesForCurrentHoard().subscribe({
-      next: (data) => {
-        this.shinies = data;
-        this.resetFilters();
-        this.buildFilterOptions();
-        this.applyFilters();
-        this.isLoading = false;
-      },
-      error: (error) => {
-        this.errorMessage = 'Failed to load shinies. Please try again later.';
-        console.error('Error fetching shinies:', error);
-        this.isLoading = false;
-      },
-    });
+    this.hoardService
+      .getShiniesForCurrentHoard()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (shinies) => {
+          this.errorMessage = null;
+          this.shinies = shinies;
+          this.resetFilters();
+          this.buildFilterOptions();
+          this.applyFilters();
+          this.isLoading = false;
+          this.changeDetectorRef.markForCheck();
+        },
+        error: (error) => {
+          this.errorMessage = 'Failed to load shinies. Please try again later.';
+          console.error('Error fetching shinies:', error);
+          this.isLoading = false;
+          this.changeDetectorRef.markForCheck();
+        },
+      });
   }
 
-  onFilterChange(filter: FilterKey, event: Event): void {
+  applyFilterSelection(filter: FilterKey, event: Event): void {
     const target = event.target as HTMLSelectElement;
     this.filters[filter] = target.value;
     this.applyFilters();
   }
 
-  onSortChange(sort: Sort): void {
+  applySortOrder(sort: Sort): void {
     this.sortState = sort;
     this.applyFilters();
   }
@@ -113,7 +129,8 @@ export class HoardViewComponent implements OnInit {
       const matchesCategory =
         !this.filters.category || shiny.category === this.filters.category;
       const matchesContext =
-        !this.filters.context || shiny.primaryContext === this.filters.context;
+        !this.filters.context ||
+        shiny.contexts.some((context) => context === this.filters.context);
       const matchesStatus =
         !this.filters.status || shiny.status === this.filters.status;
       const matchesColor =
@@ -136,10 +153,10 @@ export class HoardViewComponent implements OnInit {
     }
 
     const accessor: Record<Exclude<SortKey, ''>, (shiny: Shiny) => string> = {
-      category: (shiny) => shiny.category,
-      context: (shiny) => shiny.primaryContext,
-      status: (shiny) => shiny.status,
-      color: (shiny) => shiny.colorPrimary,
+      category: (shiny) => shiny.category.toString(),
+      context: (shiny) => this.getPrimaryContext(shiny),
+      status: (shiny) => shiny.status.toString(),
+      color: (shiny) => shiny.colorPrimary.toString(),
     };
 
     const selectValue = accessor[active];
@@ -153,14 +170,24 @@ export class HoardViewComponent implements OnInit {
   }
 
   private buildFilterOptions(): void {
-    this.categoryOptions = this.getUniqueValues((shiny) => shiny.category);
-    this.contextOptions = this.getUniqueValues((shiny) => shiny.primaryContext);
-    this.statusOptions = this.getUniqueValues((shiny) => shiny.status);
-    this.colorOptions = this.getUniqueValues((shiny) => shiny.colorPrimary);
+    this.categoryOptions = this.getUniqueValues((shiny) =>
+      shiny.category.toString(),
+    );
+    this.contextOptions = this.getUniqueValues((shiny) =>
+      this.getPrimaryContext(shiny),
+    );
+    this.statusOptions = this.getUniqueValues((shiny) => shiny.status.toString());
+    this.colorOptions = this.getUniqueValues((shiny) =>
+      shiny.colorPrimary.toString(),
+    );
   }
 
   private getUniqueValues(selector: (shiny: Shiny) => string): string[] {
     return [...new Set(this.shinies.map(selector).filter(Boolean))].sort();
+  }
+
+  private getPrimaryContext(shiny: Shiny): string {
+    return shiny.contexts[0] ?? '';
   }
 
   private resetFilters(): void {

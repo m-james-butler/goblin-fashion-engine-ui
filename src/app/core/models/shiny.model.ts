@@ -1,5 +1,5 @@
 import {
-  AttentionLevel,
+  Attention,
   Color,
   Context,
   EngineInclusionPolicy,
@@ -27,7 +27,7 @@ export interface Shiny {
 
   contexts: Context[];
   formality: Formality;
-  attention: AttentionLevel;
+  attention: Attention;
 
   colorPrimary: Color;
   colorSecondary?: Color;

@@ -64,4 +64,5 @@ Actual data and operation access must be enforced with:
 Security depends on rules and auth, not on hiding client config in frontend code.
 
 ## Additional Documentation
-- Architecture reference: `docs/application-architecture.md`
+- Architecture reference: `docs/architecture.md`
+

@@ -1,24 +1,24 @@
-import { Component } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [],
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [AsyncPipe],
   templateUrl: './dashboard-page.component.html',
   styleUrl: './dashboard-page.component.scss',
 })
 export class DashboardPageComponent {
-  constructor(private authService: AuthService) {
-    this.authService.user$.subscribe((user) => {
-      console.log('Firebase user:', user);
-    });
-  }
+  private readonly authService = inject(AuthService);
+  readonly user$ = this.authService.user$;
 
-  async login(): Promise<void> {
+  async signInWithDemoAccount(): Promise<void> {
     await this.authService.login('m.james.butler@gmail.com', 'testpassword');
   }
 
-  async logout(): Promise<void> {
+  async signOutCurrentSession(): Promise<void> {
     await this.authService.logout();
   }
 }

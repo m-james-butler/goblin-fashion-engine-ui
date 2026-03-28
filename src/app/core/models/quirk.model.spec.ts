@@ -8,10 +8,10 @@ describe('Quirk model', () => {
       scopeType: QuirkScopeType.GOBLIN,
       scopeId: 'GBL-001',
       name: 'No gym wear in office',
-      description: 'Disallow gym-context items for office outfits',
+      description: 'Forbid gym-context items for office outfits',
       isActive: true,
       priority: 100,
-      ruleType: QuirkRuleType.DISALLOW,
+      ruleType: QuirkRuleType.FORBID,
       conditions: {
         all: [
           { field: 'contexts', op: QuirkOperator.CONTAINS, value: 'GYM' },
@@ -28,7 +28,7 @@ describe('Quirk model', () => {
 
     expect(quirk.id).toBe('QRK-001');
     expect(quirk.scopeType).toBe(QuirkScopeType.GOBLIN);
-    expect(quirk.ruleType).toBe(QuirkRuleType.DISALLOW);
+    expect(quirk.ruleType).toBe(QuirkRuleType.FORBID);
     expect(quirk.conditions.all?.length).toBe(2);
     expect(quirk.effect.action).toBe('EXCLUDE_ITEM');
   });

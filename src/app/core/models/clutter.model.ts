@@ -1,5 +1,5 @@
 import {
-  AttentionLevel,
+  Attention,
   ClutterItemRole,
   ClutterSource,
   ClutterStatus,
@@ -18,7 +18,7 @@ export interface Clutter {
   status: ClutterStatus;
 
   targetContexts?: Context[];
-  targetAttention?: AttentionLevel;
+  targetAttention?: Attention;
 
   items: ClutterItem[];
 

@@ -1,6 +1,6 @@
 import { Clutter } from './clutter.model';
 import {
-  AttentionLevel,
+  Attention,
   ClutterItemRole,
   ClutterSource,
   ClutterStatus,
@@ -15,10 +15,10 @@ describe('Clutter model', () => {
       hoardId: 'HRD-001',
       name: 'Office Smart Casual',
       description: 'Default office look',
-      source: ClutterSource.RULE_ENGINE,
+      source: ClutterSource.ENGINE,
       status: ClutterStatus.ACTIVE,
       targetContexts: [Context.OFFICE, Context.SMART_CASUAL],
-      targetAttention: AttentionLevel.LOW,
+      targetAttention: Attention.LOW,
       items: [
         { shinyId: 'SH-001', role: ClutterItemRole.TOP, slotOrder: 1 },
         { shinyId: 'SH-010', role: ClutterItemRole.BOTTOM, slotOrder: 2 },

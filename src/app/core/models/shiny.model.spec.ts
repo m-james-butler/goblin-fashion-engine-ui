@@ -1,6 +1,6 @@
 import { Shiny } from './shiny.model';
 import {
-  AttentionLevel,
+  Attention,
   Color,
   Context,
   EngineInclusionPolicy,
@@ -12,7 +12,7 @@ import {
 } from './enums';
 
 describe('Shiny model', () => {
-  it('should support the provided shiny object shape', () => {
+  it('should support the backend-aligned shiny object shape', () => {
     const shiny: Shiny = {
       id: 'SH-001',
       goblinId: 'GBL-001',
@@ -25,14 +25,13 @@ describe('Shiny model', () => {
       layer: Layer.MID,
       contexts: [Context.OFFICE, Context.CASUAL],
       formality: Formality.SMART_CASUAL,
-      attention: AttentionLevel.LOW,
+      attention: Attention.LOW,
       colorPrimary: Color.NAVY,
       colorSecondary: Color.GREY,
       pattern: Pattern.SOLID,
       fabric: 'Cotton',
       fit: 'Regular',
       warmth: 2,
-      filename: 'navy-quarter-zip.jpg',
       officeOk: true,
       publicWear: true,
       includeInEngine: true,

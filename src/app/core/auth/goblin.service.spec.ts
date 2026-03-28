@@ -1,13 +1,29 @@
 import { TestBed } from '@angular/core/testing';
+import { BehaviorSubject, firstValueFrom } from 'rxjs';
+import { User } from 'firebase/auth';
 
 import { GoblinService } from './goblin.service';
-import { Goblin } from '../models/goblin.model';
+import { AuthService } from './auth.service';
 
 describe('GoblinService', () => {
   let service: GoblinService;
+  let userSubject: BehaviorSubject<User | null>;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    userSubject = new BehaviorSubject<User | null>(null);
+
+    TestBed.configureTestingModule({
+      providers: [
+        GoblinService,
+        {
+          provide: AuthService,
+          useValue: {
+            user$: userSubject.asObservable(),
+          },
+        },
+      ],
+    });
+
     service = TestBed.inject(GoblinService);
   });
 
@@ -15,19 +31,28 @@ describe('GoblinService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should return the id of the logged-in goblin', () => {
-    expect(service.getLoggedInGoblinId()).toBe('GBL-001');
+  it('should emit null when auth has no user', async () => {
+    userSubject.next(null);
+
+    const result = await firstValueFrom(service.getCurrentGoblin());
+
+    expect(result).toBeNull();
   });
 
-  it('should return the full logged-in goblin', () => {
-    const result = service.getLoggedInGoblin();
+  it('should map an authenticated user to the Goblin contract', async () => {
+    userSubject.next({
+      uid: 'GBL-001',
+      displayName: 'Snarkle',
+      email: 'snarkle@goblin.fashion',
+    } as User);
 
-    const expected: Goblin = {
+    const result = await firstValueFrom(service.getCurrentGoblin());
+
+    expect(result).toEqual({
       id: 'GBL-001',
-      name: 'Snarkle',
-      hoardId: 'HRD-001',
-    };
-
-    expect(result).toEqual(expected);
+      displayName: 'Snarkle',
+      email: 'snarkle@goblin.fashion',
+      defaultHoardId: 'main',
+    });
   });
 });

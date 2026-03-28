@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Goblin } from '../models/goblin.model';
 import { AuthService } from './auth.service';
 import { map, Observable } from 'rxjs';
@@ -7,9 +7,7 @@ import { map, Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class GoblinService {
-  constructor(private authService: AuthService) {
-    //intentionally left blank
-  }
+  private readonly authService = inject(AuthService);
 
   getCurrentGoblin(): Observable<Goblin | null> {
     return this.authService.user$.pipe(
@@ -20,8 +18,9 @@ export class GoblinService {
 
         return {
           id: user.uid,
-          name: user.displayName || user.email || 'Unnamed Goblin',
-          hoardId: 'main',
+          displayName: user.displayName || user.email || 'Unnamed Goblin',
+          email: user.email || undefined,
+          defaultHoardId: 'main',
         };
       }),
     );
