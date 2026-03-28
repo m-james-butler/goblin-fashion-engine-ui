@@ -15,6 +15,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { HoardService } from '../../../core/api/hoard.service';
 import { Shiny } from '../../../core/models/shiny.model';
+import { AppLoggerService } from '../../../core/logging/app-logger.service';
 
 type FilterKey = 'category' | 'context' | 'status' | 'color';
 type SortKey = '' | 'category' | 'context' | 'status' | 'color';
@@ -37,6 +38,7 @@ export class HoardViewComponent implements OnInit {
   private readonly hoardService = inject(HoardService);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly logger = inject(AppLoggerService);
 
   shinies: Shiny[] = [];
   filteredShinies: Shiny[] = [];
@@ -80,6 +82,7 @@ export class HoardViewComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (shinies) => {
+          this.logger.info('hoard.view.load.succeeded', { shinyCount: shinies.length });
           this.errorMessage = null;
           this.shinies = shinies;
           this.resetFilters();
@@ -90,7 +93,7 @@ export class HoardViewComponent implements OnInit {
         },
         error: (error) => {
           this.errorMessage = 'Failed to load shinies. Please try again later.';
-          console.error('Error fetching shinies:', error);
+          this.logger.error('hoard.view.load.failed', { error });
           this.isLoading = false;
           this.changeDetectorRef.markForCheck();
         },

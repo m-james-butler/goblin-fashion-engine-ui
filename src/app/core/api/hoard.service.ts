@@ -7,6 +7,7 @@ import { ApiService } from './api.service';
 import { GoblinService } from '../auth/goblin.service';
 import { Hoard } from '../models/hoard.model';
 import { Shiny } from '../models/shiny.model';
+import { AppLoggerService } from '../logging/app-logger.service';
 
 type HoardWithShinies = Hoard & { shinies: Shiny[] };
 
@@ -17,24 +18,36 @@ export class HoardService {
   private readonly http = inject(HttpClient);
   private readonly apiService = inject(ApiService);
   private readonly goblinService = inject(GoblinService);
+  private readonly logger = inject(AppLoggerService);
 
   getHoardById(hoardId: string): Observable<HoardWithShinies | null> {
     return this.goblinService.getCurrentGoblin().pipe(
       switchMap((goblin) => {
         if (!goblin) {
+          this.logger.warn('hoard.lookup.skipped.no-authenticated-user', { hoardId });
           return of(null);
         }
 
         const shiniesUrl = this.apiService.buildGoblinHoardShiniesPath(goblin.id, hoardId);
+        this.logger.debug('hoard.lookup.started', {
+          endpoint: sanitizeEndpoint(shiniesUrl),
+          hoardId,
+        });
         return this.http.get<Shiny[]>(shiniesUrl).pipe(
-          map((shinies) => ({
-            id: hoardId,
-            name: 'Main Hoard',
-            goblinId: goblin.id,
-            isDefault: hoardId === goblin.defaultHoardId,
-            isActive: true,
-            shinies,
-          })),
+          map((shinies) => {
+            this.logger.info('hoard.lookup.succeeded', {
+              hoardId,
+              shinyCount: shinies.length,
+            });
+            return {
+              id: hoardId,
+              name: 'Main Hoard',
+              goblinId: goblin.id,
+              isDefault: hoardId === goblin.defaultHoardId,
+              isActive: true,
+              shinies,
+            };
+          }),
         );
       }),
     );
@@ -44,11 +57,15 @@ export class HoardService {
     return this.goblinService.getCurrentGoblin().pipe(
       switchMap((goblin) => {
         if (!goblin) {
+          this.logger.warn('hoard.current.lookup.skipped.no-authenticated-user');
           return of(null);
         }
 
         return this.getHoardById(goblin.defaultHoardId).pipe(
-          catchError(() => of(null)),
+          catchError((error) => {
+            this.logger.error('hoard.current.lookup.failed', { error });
+            return of(null);
+          }),
         );
       }),
     );
@@ -57,7 +74,17 @@ export class HoardService {
   getShiniesForCurrentHoard(): Observable<Shiny[]> {
     return this.getCurrentHoard().pipe(
       map((hoard) => hoard?.shinies ?? []),
-      catchError(() => of([])),
+      catchError((error) => {
+        this.logger.error('hoard.shinies.lookup.failed', { error });
+        return of([]);
+      }),
     );
   }
+}
+
+function sanitizeEndpoint(url: string): string {
+  return url
+    .replace(/\/goblins\/[^/]+/g, '/goblins/{goblinId}')
+    .replace(/\/hoards\/[^/]+/g, '/hoards/{hoardId}')
+    .replace(/\/shinies\/[^/?]+/g, '/shinies/{shinyId}');
 }

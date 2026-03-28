@@ -11,6 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { AppLoggerService } from '../../../core/logging/app-logger.service';
 
 @Component({
   selector: 'app-login-page',
@@ -26,6 +27,7 @@ export class LoginPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly logger = inject(AppLoggerService);
 
   readonly user$ = this.authService.user$;
 
@@ -42,6 +44,7 @@ export class LoginPageComponent implements OnInit {
           return;
         }
 
+        this.logger.info('login.page.authenticated.redirecting');
         void this.navigateToPostLoginDestination();
       });
   }
@@ -50,11 +53,15 @@ export class LoginPageComponent implements OnInit {
     this.errorMessage = null;
     this.isSubmitting = true;
     this.changeDetectorRef.markForCheck();
+    this.logger.info('login.password.submit.started', {
+      usedUsernameInput: !this.usernameOrEmail.trim().includes('@'),
+    });
 
     try {
       await this.authService.loginWithPassword(this.usernameOrEmail, this.password);
       await this.navigateToPostLoginDestination();
     } catch {
+      this.logger.warn('login.password.submit.failed');
       this.errorMessage = 'Sign-in failed. Check your username/email and password.';
     } finally {
       this.isSubmitting = false;
@@ -66,11 +73,13 @@ export class LoginPageComponent implements OnInit {
     this.errorMessage = null;
     this.isSubmitting = true;
     this.changeDetectorRef.markForCheck();
+    this.logger.info('login.google.submit.started');
 
     try {
       await this.authService.loginWithGoogle();
       await this.navigateToPostLoginDestination();
     } catch {
+      this.logger.warn('login.google.submit.failed');
       this.errorMessage = 'Google sign-in failed. Please try again.';
     } finally {
       this.isSubmitting = false;
@@ -80,6 +89,7 @@ export class LoginPageComponent implements OnInit {
 
   private async navigateToPostLoginDestination(): Promise<void> {
     const redirectTo = this.route.snapshot.queryParamMap.get('redirectTo') || '/';
+    this.logger.debug('login.redirect.navigating', { redirectTo });
     await this.router.navigateByUrl(redirectTo);
   }
 }

@@ -76,7 +76,6 @@ describe('HoardViewComponent', () => {
   });
 
   it('shows error state when data retrieval fails', () => {
-    spyOn(console, 'error');
     hoardServiceSpy.getShiniesForCurrentHoard.and.returnValue(
       throwError(() => new Error('boom')),
     );
