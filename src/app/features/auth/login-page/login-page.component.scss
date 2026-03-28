@@ -1,0 +1,78 @@
+:host {
+  display: block;
+}
+
+.login-page {
+  display: grid;
+  place-items: center;
+  min-height: calc(100vh - 8rem);
+  padding: 1.5rem;
+}
+
+.login-card {
+  width: min(100%, 26rem);
+  padding: 1.5rem;
+  border: 1px solid #d6d6d6;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+}
+
+.subhead {
+  margin: 0 0 1rem;
+  color: #3d3d3d;
+}
+
+form {
+  display: grid;
+  gap: 0.6rem;
+}
+
+label {
+  font-weight: 600;
+}
+
+input {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #c7c7c7;
+  border-radius: 0.45rem;
+}
+
+button {
+  margin-top: 0.6rem;
+  border: 0;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #111;
+  color: #fff;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.divider {
+  margin: 1rem 0 0.5rem;
+  text-align: center;
+  color: #6e6e6e;
+}
+
+.google {
+  width: 100%;
+  margin-top: 0;
+  background: #ffffff;
+  border: 1px solid #c7c7c7;
+  color: #1f1f1f;
+}
+
+.error {
+  margin: 0 0 1rem;
+  color: #b30000;
+  font-weight: 600;
+}

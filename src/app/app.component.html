@@ -1,11 +1,19 @@
 <header class="app-header">
   <div class="brand">{{ title }}</div>
-  <nav class="app-nav" aria-label="Primary">
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
-    <a routerLink="/inventory" routerLinkActive="active">Hoard View</a>
-    <a routerLink="/outfits" routerLinkActive="active">Outfits</a>
-    <a routerLink="/rules" routerLinkActive="active">Rules</a>
-  </nav>
+  @if (user$ | async; as user) {
+    <nav class="app-nav" aria-label="Primary">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
+      <a routerLink="/inventory" routerLinkActive="active">Hoard View</a>
+      <a routerLink="/outfits" routerLinkActive="active">Outfits</a>
+      <a routerLink="/rules" routerLinkActive="active">Rules</a>
+    </nav>
+    <div class="session-controls">
+      <span class="session-user">{{ user.email ?? user.displayName ?? user.uid }}</span>
+      <button type="button" class="logout" (click)="logout()">Logout</button>
+    </div>
+  } @else {
+    <a routerLink="/login" class="login-link">Login</a>
+  }
 </header>
 
 <main class="app-main">

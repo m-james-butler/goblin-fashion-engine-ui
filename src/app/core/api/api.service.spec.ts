@@ -13,4 +13,10 @@ describe('ApiService', () => {
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
+
+  it('should build goblin hoard shinies API path', () => {
+    expect(service.buildGoblinHoardShiniesPath('GBL-001', 'HRD-001')).toBe(
+      '/api/goblins/GBL-001/hoards/HRD-001/shinies',
+    );
+  });
 });

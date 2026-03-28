@@ -17,7 +17,6 @@ import {
   EngineInclusionPolicy,
   Formality,
   Layer,
-  Pattern,
   ShinyCategory,
   ShinyStatus,
 } from '../models/enums';
@@ -34,29 +33,30 @@ describe('HoardService', () => {
     defaultHoardId: 'HRD-001',
   };
 
-  const legacyInventory = [
+  const apiResponse: Shiny[] = [
     {
       id: 'SH-001',
+      goblinId: 'GBL-001',
+      hoardId: 'HRD-001',
+      name: 'Navy Quarter Zip',
       count: 1,
-      category: 'Shirts',
+      category: ShinyCategory.TOP,
       subcategory: 'Sweater',
-      primaryContext: 'Office',
-      secondaryContext: 'Casual',
-      formality: 'Smart Casual',
-      layer: 'Mid',
-      colorPrimary: 'Navy',
-      colorSecondary: 'Grey',
-      pattern: 'Solid',
+      layer: Layer.MID,
+      contexts: [Context.OFFICE, Context.CASUAL],
+      formality: Formality.SMART_CASUAL,
+      attention: Attention.LOW,
+      colorPrimary: Color.NAVY,
+      colorSecondary: Color.GREY,
       fabric: 'Cotton',
       fit: 'Regular',
       warmth: 2,
       officeOk: true,
       publicWear: true,
       includeInEngine: true,
-      imagePath: '/resources/images/Shirts/navy-quarter-zip.jpg',
-      status: 'Owned',
+      engineInclusionPolicy: EngineInclusionPolicy.NORMAL,
+      status: ShinyStatus.OWNED,
       notes: 'Reliable office layer',
-      attentionLevel: 'Low',
     },
   ];
 
@@ -94,11 +94,11 @@ describe('HoardService', () => {
       result = hoard;
     });
 
-    httpMock.expectNone('/resources/inventory.json');
+    httpMock.expectNone('/api/goblins/GBL-001/hoards/HRD-001/shinies');
     expect(result).toBeNull();
   });
 
-  it('should build a hoard payload from inventory for an authenticated goblin', () => {
+  it('should build a hoard payload from API response for an authenticated goblin', () => {
     goblinServiceSpy.getCurrentGoblin.and.returnValue(of(currentGoblin));
 
     let result: unknown;
@@ -106,9 +106,11 @@ describe('HoardService', () => {
       result = hoard;
     });
 
-    const request = httpMock.expectOne('/resources/inventory.json');
+    const request = httpMock.expectOne(
+      '/api/goblins/GBL-001/hoards/HRD-001/shinies',
+    );
     expect(request.request.method).toBe('GET');
-    request.flush(legacyInventory);
+    request.flush(apiResponse);
 
     expect(result).toEqual({
       id: 'HRD-001',
@@ -116,23 +118,7 @@ describe('HoardService', () => {
       name: 'Main Hoard',
       isDefault: true,
       isActive: true,
-      shinies: [
-        jasmine.objectContaining({
-          id: 'SH-001',
-          goblinId: 'GBL-001',
-          hoardId: 'HRD-001',
-          category: ShinyCategory.TOP,
-          layer: Layer.MID,
-          contexts: [Context.OFFICE, Context.CASUAL],
-          formality: Formality.SMART_CASUAL,
-          attention: Attention.LOW,
-          colorPrimary: Color.NAVY,
-          colorSecondary: Color.GREY,
-          pattern: Pattern.SOLID,
-          status: ShinyStatus.OWNED,
-          engineInclusionPolicy: EngineInclusionPolicy.NORMAL,
-        }),
-      ],
+      shinies: apiResponse,
     });
   });
 
@@ -144,7 +130,7 @@ describe('HoardService', () => {
       result = hoard;
     });
 
-    httpMock.expectNone('/resources/inventory.json');
+    httpMock.expectNone('/api/goblins/GBL-001/hoards/HRD-001/shinies');
     expect(result).toBeNull();
   });
 
@@ -156,8 +142,10 @@ describe('HoardService', () => {
       result = hoard;
     });
 
-    const request = httpMock.expectOne('/resources/inventory.json');
-    request.flush(legacyInventory);
+    const request = httpMock.expectOne(
+      '/api/goblins/GBL-001/hoards/HRD-001/shinies',
+    );
+    request.flush(apiResponse);
 
     expect((result as { id: string }).id).toBe('HRD-001');
   });

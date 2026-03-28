@@ -1,0 +1,41 @@
+<section class="login-page">
+  <div class="login-card">
+    <h1>Sign in</h1>
+    <p class="subhead">Use your goblin account to access your hoard.</p>
+
+    @if (errorMessage) {
+      <p class="error">{{ errorMessage }}</p>
+    }
+
+    <form (ngSubmit)="loginWithPassword()" #loginForm="ngForm">
+      <label for="usernameOrEmail">Username or email</label>
+      <input
+        id="usernameOrEmail"
+        name="usernameOrEmail"
+        [(ngModel)]="usernameOrEmail"
+        required
+        autocomplete="username"
+      />
+
+      <label for="password">Password</label>
+      <input
+        id="password"
+        type="password"
+        name="password"
+        [(ngModel)]="password"
+        required
+        autocomplete="current-password"
+      />
+
+      <button type="submit" [disabled]="isSubmitting || loginForm.invalid">
+        Sign in with password
+      </button>
+    </form>
+
+    <div class="divider" aria-hidden="true">or</div>
+
+    <button type="button" class="google" (click)="loginWithGoogle()" [disabled]="isSubmitting">
+      Continue with Google
+    </button>
+  </div>
+</section>

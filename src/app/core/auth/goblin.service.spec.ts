@@ -52,7 +52,7 @@ describe('GoblinService', () => {
       id: 'GBL-001',
       displayName: 'Snarkle',
       email: 'snarkle@goblin.fashion',
-      defaultHoardId: 'main',
+      defaultHoardId: 'HRD-001',
     });
   });
 });

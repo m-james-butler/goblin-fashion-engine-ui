@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 
 import { DashboardPageComponent } from './dashboard-page.component';
+import { AuthService } from '../../../core/auth/auth.service';
 
 describe('DashboardPageComponent', () => {
   let component: DashboardPageComponent;
@@ -8,7 +10,15 @@ describe('DashboardPageComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [DashboardPageComponent]
+      imports: [DashboardPageComponent],
+      providers: [
+        {
+          provide: AuthService,
+          useValue: {
+            user$: of(null),
+          },
+        },
+      ],
     })
     .compileComponents();
 

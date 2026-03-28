@@ -1,8 +1,5 @@
 <p>dashboard-page works!</p>
 @if (user$ | async; as user) {
-  <p>Signed in as: {{ user.email ?? user.displayName ?? user.uid }}</p>
-} @else {
-  <p>Not signed in.</p>
+  <p>Signed in as: {{ user.email ?? user.displayName ?? user.uid }}.</p>
+  <p>Your session is authenticated and ready for API calls.</p>
 }
-<button type="button" (click)="signInWithDemoAccount()">Login</button>
-<button type="button" (click)="signOutCurrentSession()">Logout</button>

@@ -1,5 +1,10 @@
 export const environment = {
   production: false,
+  apiBaseUrl: '/',
+  auth: {
+    usernameEmailDomain: 'goblin.fashion',
+    defaultHoardId: 'HRD-001',
+  },
   firebase: {
     apiKey: 'AIzaSyDk4DAIERrO4wqpRIZhoXOgpVTuaaSyTuI',
     authDomain: 'goblin-fashion-engine.firebaseapp.com',

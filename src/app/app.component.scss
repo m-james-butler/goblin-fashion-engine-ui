@@ -49,3 +49,35 @@
   padding: 1rem 0;
   width: 100%;
 }
+
+.session-controls {
+  align-items: center;
+  display: flex;
+  gap: 0.65rem;
+}
+
+.session-user {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.logout,
+.login-link {
+  border: 1px solid var(--mat-sys-outline, #757575);
+  border-radius: 999px;
+  color: inherit;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.35rem 0.7rem;
+  text-decoration: none;
+}
+
+.logout {
+  background: transparent;
+  cursor: pointer;
+}
+
+.logout:hover,
+.login-link:hover {
+  background: var(--mat-sys-surface-container-highest, #525252);
+}

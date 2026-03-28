@@ -1,12 +1,27 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { of } from 'rxjs';
+
 import { AppComponent } from './app.component';
+import { AuthService } from './core/auth/auth.service';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        {
+          provide: AuthService,
+          useValue: {
+            user$: of({
+              uid: 'GBL-001',
+              email: 'snarkle@goblin.fashion',
+            }),
+            logout: jasmine.createSpy('logout'),
+          },
+        },
+      ],
     }).compileComponents();
   });
 

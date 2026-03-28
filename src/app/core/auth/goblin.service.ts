@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Goblin } from '../models/goblin.model';
 import { AuthService } from './auth.service';
 import { map, Observable } from 'rxjs';
+import { environment } from '../../../environments/environments';
 
 @Injectable({
   providedIn: 'root',
@@ -20,7 +21,7 @@ export class GoblinService {
           id: user.uid,
           displayName: user.displayName || user.email || 'Unnamed Goblin',
           email: user.email || undefined,
-          defaultHoardId: 'main',
+          defaultHoardId: environment.auth.defaultHoardId,
         };
       }),
     );

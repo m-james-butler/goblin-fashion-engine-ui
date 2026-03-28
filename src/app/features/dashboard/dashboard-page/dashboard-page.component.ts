@@ -13,12 +13,4 @@ import { AuthService } from '../../../core/auth/auth.service';
 export class DashboardPageComponent {
   private readonly authService = inject(AuthService);
   readonly user$ = this.authService.user$;
-
-  async signInWithDemoAccount(): Promise<void> {
-    await this.authService.login('m.james.butler@gmail.com', 'testpassword');
-  }
-
-  async signOutCurrentSession(): Promise<void> {
-    await this.authService.logout();
-  }
 }
