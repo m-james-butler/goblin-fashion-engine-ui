@@ -16,7 +16,6 @@ export interface Shiny {
   hoardId: string;
 
   name?: string;
-  filename?: string;
   notes?: string;
 
   count: number;

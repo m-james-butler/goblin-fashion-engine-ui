@@ -1,6 +1,6 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { from, switchMap } from 'rxjs';
+import { from, switchMap, throwError } from 'rxjs';
 
 import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environments';
@@ -21,7 +21,15 @@ export const authTokenInterceptor: HttpInterceptorFn = (request, next) => {
           method: request.method,
           endpoint,
         });
-        return next(request);
+        return throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 401,
+              statusText: 'Missing auth token',
+              url: request.urlWithParams,
+              error: { message: 'Authenticated Firebase ID token is required.' },
+            }),
+        );
       }
 
       logger.debug('auth.token.interceptor.attached-token', {

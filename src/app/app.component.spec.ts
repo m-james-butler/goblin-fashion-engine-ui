@@ -1,11 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
 import { AppComponent } from './app.component';
 import { AuthService } from './core/auth/auth.service';
 
 describe('AppComponent', () => {
+  let router: Router;
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
@@ -23,6 +25,8 @@ describe('AppComponent', () => {
         },
       ],
     }).compileComponents();
+
+    router = TestBed.inject(Router);
   });
 
   it('should create the app', () => {
@@ -43,5 +47,15 @@ describe('AppComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.brand')?.textContent).toContain('Goblin Fashion Engine');
     expect(compiled.textContent).toContain('Hoard View');
+  });
+
+  it('should navigate to login on logout', async () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    spyOn(router, 'navigateByUrl').and.resolveTo(true);
+
+    await app.logout();
+
+    expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/login');
   });
 });

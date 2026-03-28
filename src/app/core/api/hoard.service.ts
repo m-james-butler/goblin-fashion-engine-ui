@@ -1,13 +1,13 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
-import { ApiService } from './api.service';
 import { GoblinService } from '../auth/goblin.service';
 import { Hoard } from '../models/hoard.model';
 import { Shiny } from '../models/shiny.model';
 import { AppLoggerService } from '../logging/app-logger.service';
+import { ShinyApiService } from './shiny-api.service';
+import { ShinyAdapter } from './adapters/shiny.adapter';
 
 type HoardWithShinies = Hoard & { shinies: Shiny[] };
 
@@ -15,9 +15,9 @@ type HoardWithShinies = Hoard & { shinies: Shiny[] };
   providedIn: 'root',
 })
 export class HoardService {
-  private readonly http = inject(HttpClient);
-  private readonly apiService = inject(ApiService);
   private readonly goblinService = inject(GoblinService);
+  private readonly shinyApiService = inject(ShinyApiService);
+  private readonly shinyAdapter = inject(ShinyAdapter);
   private readonly logger = inject(AppLoggerService);
 
   getHoardById(hoardId: string): Observable<HoardWithShinies | null> {
@@ -28,13 +28,10 @@ export class HoardService {
           return of(null);
         }
 
-        const shiniesUrl = this.apiService.buildGoblinHoardShiniesPath(goblin.id, hoardId);
-        this.logger.debug('hoard.lookup.started', {
-          endpoint: sanitizeEndpoint(shiniesUrl),
-          hoardId,
-        });
-        return this.http.get<Shiny[]>(shiniesUrl).pipe(
-          map((shinies) => {
+        this.logger.debug('hoard.lookup.started', { hoardId });
+        return this.shinyApiService.getShiniesByGoblinAndHoard(goblin.id, hoardId).pipe(
+          map((shinyDtos) => {
+            const shinies = this.shinyAdapter.fromDtoList(shinyDtos);
             this.logger.info('hoard.lookup.succeeded', {
               hoardId,
               shinyCount: shinies.length,
@@ -80,11 +77,4 @@ export class HoardService {
       }),
     );
   }
-}
-
-function sanitizeEndpoint(url: string): string {
-  return url
-    .replace(/\/goblins\/[^/]+/g, '/goblins/{goblinId}')
-    .replace(/\/hoards\/[^/]+/g, '/hoards/{hoardId}')
-    .replace(/\/shinies\/[^/?]+/g, '/shinies/{shinyId}');
 }

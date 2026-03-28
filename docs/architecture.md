@@ -3,85 +3,77 @@
 Last verified: March 28, 2026
 
 ## Purpose
-`goblin-fashion-engine-ui` is an Angular 19 standalone SPA for inventory browsing and outfit/rules scaffolding. The frontend contracts now mirror backend domain/DTO contracts from `goblin-fashion-engine-api`, which is the source of truth.
+`goblin-fashion-engine-ui` is an Angular 19 standalone SPA that authenticates with Firebase and loads inventory from the backend API.
 
-## Tech Stack
-- Angular 19 standalone app (`bootstrapApplication`)
-- TypeScript 5 with strict compiler settings
-- Angular Material (`table`, `sort`, `progress-spinner`, `tooltip`)
-- Firebase Web SDK (`auth`, `firestore`, `storage` initialization)
-- RxJS for async/service flows
-- Font Awesome for iconography
-- Karma/Jasmine test setup
+The frontend enforces this layering rule:
+
+`Backend DTO -> Adapter -> Frontend Model -> UI`
 
 ## Runtime Composition
 - Entry point: `src/main.ts`
 - App providers: `src/app/app.config.ts`
 - Routing: `src/app/app.routes.ts`
 
-Routes currently configured (lazy loaded):
-- `/` -> `DashboardPageComponent`
-- `/inventory` -> `HoardViewComponent`
+Routes:
+- `/login` -> `LoginPageComponent` (email/username+password or Google)
+- `/` -> `DashboardPageComponent` (guarded)
+- `/inventory` -> `HoardViewComponent` (guarded)
 - `/hoard` -> redirect to `/inventory`
-- `/outfits` -> `ClutterMashComponent`
-- `/rules` -> `QuirkLogicComponent`
+- `/outfits` -> `ClutterMashComponent` (guarded)
+- `/rules` -> `QuirkLogicComponent` (guarded)
 
-## UI Architecture
-- App shell/navigation currently lives directly in `AppComponent` (`src/app/app.component.html`).
-- Feature pages are organized under `src/app/features/*`.
-- `HoardViewComponent` is the primary data-driven feature.
-- `DashboardPageComponent`, `ClutterMashComponent`, and `QuirkLogicComponent` are still minimal feature shells.
-- Layout components under `src/app/layout/*` remain scaffolded and available for future shell composition.
+## Auth and Request Flow
+- Firebase app/auth initialization: `src/app/core/firebase/firebase.ts`
+- `AuthService` handles auth state, password login, Google login, token retrieval, logout.
+- `authGuard` blocks protected routes for unauthenticated sessions.
+- `authTokenInterceptor` attaches `Authorization: Bearer <id-token>` to `/api/goblins/**` requests.
+- If a protected request has no token, interceptor fails the request with `401` (no pass-through fallback).
+- Logout now signs out and navigates to `/login`.
 
 ## Data and Service Architecture
-Implemented services:
-- `AuthService` (`src/app/core/auth/auth.service.ts`): wraps Firebase auth state and login/logout calls.
-- `GoblinService` (`src/app/core/auth/goblin.service.ts`): maps Firebase `User` to backend-aligned `Goblin` contract.
-- `HoardService` (`src/app/core/api/hoard.service.ts`): reads inventory source, normalizes legacy inventory records into backend-aligned `Shiny` contracts, and assembles hoard payloads.
+Canonical inventory flow:
 
-Scaffolded (no business logic yet):
-- `ApiService`
-- `ShinyService`
-- `ClutterService`
-- `QuirkService`
-- `ClutterEngineService`
+1. `HoardViewComponent` consumes canonical `Shiny` model only.
+2. `HoardService` orchestrates current goblin/hoard lookup.
+3. `ShinyApiService` performs HTTP calls and returns backend DTOs (`ShinyResponseDto[]`) only.
+4. `ShinyAdapter` maps DTOs to canonical frontend `Shiny`.
+5. `HoardService` returns canonical `Shiny[]` to UI.
+
+Key files:
+- API service: `src/app/core/api/shiny-api.service.ts`
+- DTO contract: `src/app/core/api/dto/shiny-response.dto.ts`
+- Adapter layer: `src/app/core/api/adapters/shiny.adapter.ts`
+- Orchestration: `src/app/core/api/hoard.service.ts`
+- UI consumer: `src/app/features/inventory/hoard-view/hoard-view.component.ts`
+
+## Frontend Models
+Canonical models in `src/app/core/models` align with backend contract shapes:
+- `Goblin`, `Hoard`, `Shiny`, `Clutter`, `Quirk`
+- shared enums in `enums.ts`
+
+Rules now enforced:
+- UI components do not bind to backend DTOs.
+- UI-facing services do not return backend DTOs.
+- Mapping logic is centralized in adapter layer.
+- No runtime legacy field usage (for example `primaryContext`/`secondaryContext`).
+- No runtime inventory reads from `inventory.json`.
+
+## Logging
+Frontend logging is structured and privacy-safe:
+- Logger: `src/app/core/logging/app-logger.service.ts`
+- API request logging: `src/app/core/logging/api-request-logging.interceptor.ts`
+
+Logging behavior:
+- No passwords, tokens, raw auth headers, or raw email/username values in logs.
+- API endpoint logs sanitize path identifiers.
+- Logging is disabled in Karma test runtime to keep test output clean.
 
 ## Data Sources
-- Static inventory source: `src/resources/inventory.json` (served as `/resources/inventory.json`).
-- Image assets: `src/resources/images/**`.
-- Asset mapping configured in `angular.json` for both build and test targets.
-
-## Domain Contract Alignment
-Contracts in `src/app/core/models` now align to backend source contracts:
-- `Goblin`, `Hoard`, `Shiny`, `Clutter`, `Quirk`
-- Shared enums in `enums.ts` now match backend enum names/values.
-
-Notable backend parity details now enforced in frontend:
-- `Attention` naming (replacing legacy `AttentionLevel`).
-- `Context` values now match backend list exactly.
-- `ClutterSource`, `ClutterStatus`, and `ClutterItemRole` vocabularies match backend.
-- `QuirkScopeType`, `QuirkRuleType`, and `QuirkOperator` now match backend semantics.
-- Legacy local inventory fields (`primaryContext`, `secondaryContext`, `attentionLevel`, and title-cased enum values) are normalized in `HoardService` before entering the frontend domain model layer.
-
-## Hoard View Behavior
-`HoardViewComponent` provides:
-- Loading and error UI states.
-- Filter controls (category, context, status, color).
-- Sort controls (category, context, status, color).
-- Material table rendering with sticky header.
-- Image thumbnail with click-to-open modal preview.
-- Notes cell tooltip support.
-
-## Firebase Integration
-- Firebase app initialization exists in `src/app/core/firebase/firebase.ts`.
-- Firebase config is sourced from `src/environments/environments.ts`.
-- Auth state is consumed via `AuthService.user$`.
-- `DashboardPageComponent` includes explicit login/logout buttons wired to `AuthService`.
+- Runtime inventory source: backend API (`/api/goblins/{goblinId}/hoards/{hoardId}/shinies`).
+- Static assets remain under `src/resources/images/**`.
+- `inventory.json` is not used as a runtime inventory source.
 
 ## Validation Status
 Validation run on March 28, 2026:
-- `npm run build`: passing.
-- `npx ng test --watch=false --browsers=ChromeHeadless`: passing (`36 SUCCESS`).
-
-## Known Follow-Up Opportunity
-`HoardService` currently hydrates data from local `inventory.json`. As backend API endpoints expand beyond shiny inventory retrieval, the next architecture step is replacing local-source hydration with full backend API integration while preserving the same frontend contract interfaces.
+- `npm run build`: passing
+- `npm test -- --watch=false --browsers=ChromeHeadless`: passing (`38 SUCCESS`)

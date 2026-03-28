@@ -118,7 +118,7 @@ export class HoardViewComponent implements OnInit {
 
     this.selectedShiny = shiny;
     this.selectedImagePath = shiny.imagePath;
-    this.selectedImageAlt = shiny.filename || shiny.id;
+    this.selectedImageAlt = shiny.name || shiny.id;
   }
 
   closeImageModal(): void {
