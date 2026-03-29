@@ -174,6 +174,29 @@ describe('HoardViewComponent', () => {
     expect(modalImage.src).toContain('/resources/images/shiny-1.png');
   });
 
+  it('opens detail modal when shiny name is clicked', () => {
+    hoardServiceSpy.getShiniesForCurrentHoard.and.returnValue(
+      of([
+        createShiny({
+          id: 'name1',
+          imagePath: undefined,
+          name: 'Named Shiny',
+        }),
+      ]),
+    );
+
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const nameButton = host.querySelector('.name-button') as HTMLButtonElement;
+    nameButton.click();
+    fixture.detectChanges();
+
+    const modal = host.querySelector('.image-modal');
+    expect(modal).toBeTruthy();
+    expect(host.textContent).toContain('Named Shiny');
+  });
+
   it('renders fallback icon when imagePath is missing', () => {
     hoardServiceSpy.getShiniesForCurrentHoard.and.returnValue(
       of([createShiny({ id: 'no-image' })]),

@@ -1,6 +1,6 @@
 # Goblin Fashion Engine UI Architecture (Current State)
 
-Last verified: March 28, 2026
+Last verified: March 29, 2026
 
 ## Purpose
 `goblin-fashion-engine-ui` is an Angular 19 standalone SPA that authenticates with Firebase and loads inventory from the backend API.
@@ -46,6 +46,37 @@ Key files:
 - Orchestration: `src/app/core/api/hoard.service.ts`
 - UI consumer: `src/app/features/inventory/hoard-view/hoard-view.component.ts`
 
+## Inventory Detail Modal
+`HoardViewComponent` provides a detail modal for each shiny:
+- Opens when goblin clicks shiny image or shiny name.
+- Modal header contains shiny `name/id` and close button.
+- Desktop layout uses two columns:
+  - left: shiny image (or placeholder if missing)
+  - right: summary block (`category`, `subcategory`, `primary colour`, `status`, yes/no flags)
+- Mobile layout collapses to a single column.
+- Full notes render below summary/image with no truncation.
+- Remaining attributes render in a detail grid beneath notes.
+- Detail grid intentionally omits internal ownership ids (`goblinId`, `hoardId`) for now.
+
+## Enum and Display Formatting
+Enum values are rendered as human-readable labels via a shared formatting layer:
+- Utility: `src/app/core/utils/enum-label.util.ts` (`formatEnumLabel`)
+- Reusable pipe: `src/app/core/pipes/enum-label.pipe.ts` (`enumLabel`)
+
+Current usage:
+- `HoardViewComponent` templates use `| enumLabel` for filter options and enum chips.
+- Component logic uses `formatEnumLabel` for modal detail entries and color display labels.
+
+Color presentation in inventory UI:
+- Uses swatch + text treatment for `Color` enum values.
+- Swatch color is mapped by enum in `HoardViewComponent`.
+- Chip container is neutral (swatch carries the color signal).
+
+Flag presentation in detail modal:
+- Boolean flags use explicit visual states:
+  - `flag-on` for `Yes`
+  - `flag-off` for `No`
+
 ## Frontend Models
 Canonical models in `src/app/core/models` align with backend contract shapes:
 - `Goblin`, `Hoard`, `Shiny`, `Clutter`, `Quirk`
@@ -74,6 +105,5 @@ Logging behavior:
 - `inventory.json` is not used as a runtime inventory source.
 
 ## Validation Status
-Validation run on March 28, 2026:
+Validation run on March 29, 2026:
 - `npm run build`: passing
-- `npm test -- --watch=false --browsers=ChromeHeadless`: passing (`38 SUCCESS`)

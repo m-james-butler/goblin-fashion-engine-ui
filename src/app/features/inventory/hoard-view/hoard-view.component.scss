@@ -40,7 +40,8 @@
   border: 1px solid var(--mat-sys-outline-variant, #5b5b5b);
   border-radius: 0.5rem;
   max-height: 70vh;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   width: 100%;
 }
 
@@ -70,7 +71,7 @@
 }
 
 .hoard-table {
-  min-width: 950px;
+  table-layout: fixed;
   width: 100%;
 }
 
@@ -81,6 +82,12 @@
 
 .mat-mdc-header-cell.mat-column-image {
   width: 76px;
+}
+
+.mat-mdc-cell,
+.mat-mdc-header-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .image-cell-content {
@@ -125,10 +132,28 @@
 
 .notes-cell {
   display: inline-block;
-  max-width: 220px;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.name-button {
+  background: transparent;
+  border: 0;
+  color: var(--mat-sys-primary, #90caf9);
+  cursor: pointer;
+  font: inherit;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0;
+  text-overflow: ellipsis;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.name-button:hover {
+  text-decoration: underline;
 }
 
 .image-modal-backdrop {
@@ -167,25 +192,146 @@
 .modal-body {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
   padding: 0.75rem 1rem 1rem;
 }
 
-.modal-meta {
+.modal-top-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.modal-image-block img {
+  border-radius: 0.35rem;
+  display: block;
+  max-height: 50vh;
+  max-width: 100%;
+  object-fit: contain;
+  width: 100%;
+}
+
+.modal-image-placeholder {
+  align-items: center;
+  background: var(--mat-sys-surface-container, #383838);
+  border: 1px dashed var(--mat-sys-outline, #6b6b6b);
+  border-radius: 0.35rem;
   color: var(--mat-sys-on-surface-variant, #c7c7c7);
   display: flex;
-  gap: 1rem;
+  justify-content: center;
+  min-height: 14rem;
+  text-align: center;
+}
+
+.modal-summary-block,
+.modal-notes-block,
+.modal-details-block {
+  background: var(--mat-sys-surface-container, #383838);
+  border: 1px solid var(--mat-sys-outline-variant, #5b5b5b);
+  border-radius: 0.4rem;
+  padding: 0.75rem;
+}
+
+.modal-summary-block h3,
+.modal-notes-block h3,
+.modal-details-block h3 {
+  font-size: 0.95rem;
+  margin: 0 0 0.6rem;
+}
+
+.details-grid dt {
+  color: var(--mat-sys-on-surface-variant, #c7c7c7);
+  font-weight: 600;
+}
+
+.details-grid dd {
+  margin: 0;
+}
+
+.summary-row {
+  align-items: center;
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: 8.25rem minmax(0, 1fr);
+  margin-bottom: 0.5rem;
+}
+
+.summary-row > span {
+  color: var(--mat-sys-on-surface-variant, #c7c7c7);
+  font-weight: 600;
+}
+
+mat-chip-set {
+  margin: 0;
+}
+
+mat-chip {
+  font-size: 0.78rem;
+}
+
+.context-cell {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.35rem;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.context-extra {
+  color: var(--mat-sys-on-surface-variant, #c7c7c7);
+  font-size: 0.8rem;
+}
+
+.color-pill {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  color: var(--mat-sys-on-surface, #ffffff);
+  display: inline-flex;
+  gap: 0.4rem;
+  max-width: 100%;
+  padding: 0.2rem 0.58rem;
+  white-space: nowrap;
+}
+
+.color-swatch {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+  display: inline-block;
+  flex: 0 0 auto;
+  height: 0.78rem;
+  width: 0.78rem;
+}
+
+.flag-on {
+  background: rgba(72, 187, 120, 0.22);
+  border: 1px solid rgba(72, 187, 120, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(72, 187, 120, 0.2);
+  color: #d9ffe9;
+}
+
+.flag-off {
+  background: rgba(244, 114, 114, 0.2);
+  border: 1px solid rgba(244, 114, 114, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(244, 114, 114, 0.16);
+  color: #ffe2e2;
 }
 
 .modal-notes {
-  color: var(--mat-sys-on-surface, #ffffff);
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
-.modal-body img {
-  display: block;
-  max-height: 60vh;
-  max-width: 100%;
-  object-fit: contain;
+.details-grid {
+  column-gap: 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  row-gap: 0.55rem;
 }
 
 .modal-close {
@@ -204,5 +350,17 @@
 
   .filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .modal-top-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .details-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .summary-row {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

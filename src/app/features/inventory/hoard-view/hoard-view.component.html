@@ -28,7 +28,7 @@
           >
             <option value="">All</option>
             @for (option of categoryOptions; track option) {
-              <option [value]="option">{{ option }}</option>
+              <option [value]="option">{{ option | enumLabel }}</option>
             }
           </select>
         </label>
@@ -42,7 +42,7 @@
           >
             <option value="">All</option>
             @for (option of contextOptions; track option) {
-              <option [value]="option">{{ option }}</option>
+              <option [value]="option">{{ option | enumLabel }}</option>
             }
           </select>
         </label>
@@ -56,7 +56,7 @@
           >
             <option value="">All</option>
             @for (option of statusOptions; track option) {
-              <option [value]="option">{{ option }}</option>
+              <option [value]="option">{{ option | enumLabel }}</option>
             }
           </select>
         </label>
@@ -70,7 +70,7 @@
           >
             <option value="">All</option>
             @for (option of colorOptions; track option) {
-              <option [value]="option">{{ option }}</option>
+              <option [value]="option">{{ option | enumLabel }}</option>
             }
           </select>
         </label>
@@ -92,7 +92,7 @@
                   <button
                     type="button"
                     class="image-button"
-                    (click)="openImageModal(shiny)"
+                    (click)="openDetailModal(shiny)"
                   >
                     <img
                       class="shiny-image"
@@ -109,14 +109,26 @@
 
           <ng-container matColumnDef="name">
             <th mat-header-cell *matHeaderCellDef>Name</th>
-            <td mat-cell *matCellDef="let shiny">{{ shiny.id }}</td>
+            <td mat-cell *matCellDef="let shiny">
+              <button
+                type="button"
+                class="name-button"
+                (click)="openDetailModal(shiny)"
+              >
+                {{ shiny.name || shiny.id }}
+              </button>
+            </td>
           </ng-container>
 
           <ng-container matColumnDef="category">
             <th mat-header-cell *matHeaderCellDef mat-sort-header="category">
               Category
             </th>
-            <td mat-cell *matCellDef="let shiny">{{ shiny.category }}</td>
+            <td mat-cell *matCellDef="let shiny">
+              <mat-chip-set aria-label="Category">
+                <mat-chip>{{ shiny.category | enumLabel }}</mat-chip>
+              </mat-chip-set>
+            </td>
           </ng-container>
 
           <ng-container matColumnDef="subcategory">
@@ -128,7 +140,20 @@
             <th mat-header-cell *matHeaderCellDef mat-sort-header="context">
               Context
             </th>
-            <td mat-cell *matCellDef="let shiny">{{ shiny.contexts[0] || '-' }}</td>
+            <td mat-cell *matCellDef="let shiny">
+              <div class="context-cell">
+                @if (shiny.contexts.length > 0) {
+                  <mat-chip-set aria-label="Primary context">
+                    <mat-chip>{{ shiny.contexts[0] | enumLabel }}</mat-chip>
+                  </mat-chip-set>
+                  @if (shiny.contexts.length > 1) {
+                    <span class="context-extra">+{{ shiny.contexts.length - 1 }}</span>
+                  }
+                } @else {
+                  -
+                }
+              </div>
+            </td>
           </ng-container>
 
           <ng-container matColumnDef="layer">
@@ -140,7 +165,16 @@
             <th mat-header-cell *matHeaderCellDef mat-sort-header="color">
               Color
             </th>
-            <td mat-cell *matCellDef="let shiny">{{ shiny.colorPrimary }}</td>
+            <td mat-cell *matCellDef="let shiny">
+              @let colorPresentation = getColorPresentation(shiny.colorPrimary);
+              <span class="color-pill">
+                <span
+                  class="color-swatch"
+                  [style.background]="colorPresentation.swatch"
+                ></span>
+                <span>{{ colorPresentation.displayLabel }}</span>
+              </span>
+            </td>
           </ng-container>
 
           <ng-container matColumnDef="pattern">
@@ -157,7 +191,11 @@
             <th mat-header-cell *matHeaderCellDef mat-sort-header="status">
               Status
             </th>
-            <td mat-cell *matCellDef="let shiny">{{ shiny.status }}</td>
+            <td mat-cell *matCellDef="let shiny">
+              <mat-chip-set aria-label="Status">
+                <mat-chip>{{ shiny.status | enumLabel }}</mat-chip>
+              </mat-chip-set>
+            </td>
           </ng-container>
 
           <ng-container matColumnDef="notes">
@@ -178,11 +216,11 @@
         </table>
       </div>
 
-      @if (selectedImagePath) {
+      @if (selectedShiny) {
         <div class="image-modal-backdrop" (click)="closeImageModal()">
           <div class="image-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
             <div class="modal-header">
-              <h2 class="modal-title">{{ selectedShiny?.id }}</h2>
+              <h2 class="modal-title">{{ getModalTitle(selectedShiny) }}</h2>
               <button
                 type="button"
                 class="modal-close"
@@ -193,15 +231,86 @@
               </button>
             </div>
             <div class="modal-body">
-              <div class="modal-meta">
-                <span>{{ selectedShiny?.category }}</span>
-                <span>{{ selectedShiny?.subcategory }}</span>
-                <span>{{ selectedShiny?.colorPrimary }}</span>
+              <div class="modal-top-grid">
+                <div class="modal-image-block">
+                  @if (selectedImagePath) {
+                    <img [src]="selectedImagePath" [alt]="selectedImageAlt" />
+                  } @else {
+                    <div class="modal-image-placeholder">No Image Available</div>
+                  }
+                </div>
+                <div class="modal-summary-block">
+                  <h3>Summary</h3>
+                  <div class="summary-row">
+                    <span>Category</span>
+                    <mat-chip-set aria-label="Summary category">
+                      <mat-chip>{{ selectedShiny.category | enumLabel }}</mat-chip>
+                    </mat-chip-set>
+                  </div>
+                  <div class="summary-row">
+                    <span>Subcategory</span>
+                    <mat-chip-set aria-label="Summary subcategory">
+                      <mat-chip>{{ selectedShiny.subcategory || '-' }}</mat-chip>
+                    </mat-chip-set>
+                  </div>
+                  <div class="summary-row">
+                    <span>Primary Colour</span>
+                    @let selectedColorPresentation =
+                      getColorPresentation(selectedShiny.colorPrimary);
+                    <span class="color-pill">
+                      <span
+                        class="color-swatch"
+                        [style.background]="selectedColorPresentation.swatch"
+                      ></span>
+                      <span>{{ selectedColorPresentation.displayLabel }}</span>
+                    </span>
+                  </div>
+                  <div class="summary-row">
+                    <span>Status</span>
+                    <mat-chip-set aria-label="Summary status">
+                      <mat-chip>{{ selectedShiny.status | enumLabel }}</mat-chip>
+                    </mat-chip-set>
+                  </div>
+                  <div class="summary-row">
+                    <span>Flags</span>
+                    <mat-chip-set aria-label="Summary flags">
+                      <mat-chip
+                        [class.flag-on]="selectedShiny.officeOk"
+                        [class.flag-off]="!selectedShiny.officeOk"
+                      >
+                        Office: {{ selectedShiny.officeOk ? 'Yes' : 'No' }}
+                      </mat-chip>
+                      <mat-chip
+                        [class.flag-on]="selectedShiny.publicWear"
+                        [class.flag-off]="!selectedShiny.publicWear"
+                      >
+                        Public: {{ selectedShiny.publicWear ? 'Yes' : 'No' }}
+                      </mat-chip>
+                      <mat-chip
+                        [class.flag-on]="selectedShiny.includeInEngine"
+                        [class.flag-off]="!selectedShiny.includeInEngine"
+                      >
+                        Engine: {{ selectedShiny.includeInEngine ? 'Yes' : 'No' }}
+                      </mat-chip>
+                    </mat-chip-set>
+                  </div>
+                </div>
               </div>
-              <div class="modal-notes">
-                {{ selectedShiny?.notes || 'No notes available.' }}
+
+              <div class="modal-notes-block">
+                <h3>Notes</h3>
+                <p class="modal-notes">{{ selectedShiny.notes || 'No notes available.' }}</p>
               </div>
-              <img [src]="selectedImagePath" [alt]="selectedImageAlt" />
+
+              <div class="modal-details-block">
+                <h3>Details</h3>
+                <dl class="details-grid">
+                  @for (entry of getDetailEntries(selectedShiny); track entry.label) {
+                    <dt>{{ entry.label }}</dt>
+                    <dd>{{ entry.value }}</dd>
+                  }
+                </dl>
+              </div>
             </div>
           </div>
         </div>
