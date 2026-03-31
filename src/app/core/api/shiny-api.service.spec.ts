@@ -58,4 +58,77 @@ describe('ShinyApiService', () => {
 
     expect(resultLength).toBe(1);
   });
+
+  it('should post a shiny create payload to the shiny endpoint', () => {
+    let createdId = '';
+    service
+      .createShinyForGoblinAndHoard('GBL-001', 'HRD-001', {
+        id: 'SH-NEW-1',
+        name: 'New Vest',
+        count: 1,
+        category: 'TOP',
+        layer: 'MID',
+        contexts: ['CASUAL'],
+        formality: 'CASUAL',
+        attention: 'LOW',
+        colorPrimary: 'BLACK',
+        officeOk: true,
+        publicWear: true,
+        includeInEngine: true,
+        engineInclusionPolicy: 'NORMAL',
+        status: 'OWNED',
+      })
+      .subscribe((response) => {
+        createdId = response.id;
+      });
+
+    const request = httpMock.expectOne('/api/goblins/GBL-001/hoards/HRD-001/shinies');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual(
+      jasmine.objectContaining({
+        id: 'SH-NEW-1',
+        name: 'New Vest',
+        category: 'TOP',
+        colorPrimary: 'BLACK',
+      }),
+    );
+
+    request.flush({
+      id: 'SH-NEW-1',
+      goblinId: 'GBL-001',
+      hoardId: 'HRD-001',
+      name: 'New Vest',
+      count: 1,
+      category: 'TOP',
+      layer: 'MID',
+      contexts: ['CASUAL'],
+      formality: 'CASUAL',
+      attention: 'LOW',
+      colorPrimary: 'BLACK',
+      officeOk: true,
+      publicWear: true,
+      includeInEngine: true,
+      engineInclusionPolicy: 'NORMAL',
+      status: 'OWNED',
+    });
+
+    expect(createdId).toBe('SH-NEW-1');
+  });
+
+  it('should delete a shiny by id from the shiny endpoint', () => {
+    let completed = false;
+    service.deleteShinyForGoblinAndHoard('GBL-001', 'HRD-001', 'SH-DELETE-1').subscribe({
+      next: () => {
+        completed = true;
+      },
+    });
+
+    const request = httpMock.expectOne(
+      '/api/goblins/GBL-001/hoards/HRD-001/shinies/SH-DELETE-1',
+    );
+    expect(request.request.method).toBe('DELETE');
+    request.flush(null);
+
+    expect(completed).toBeTrue();
+  });
 });

@@ -19,4 +19,10 @@ describe('ApiService', () => {
       '/api/goblins/GBL-001/hoards/HRD-001/shinies',
     );
   });
+
+  it('should build goblin hoard single shiny API path', () => {
+    expect(service.buildGoblinHoardShinyPath('GBL-001', 'HRD-001', 'SH-001')).toBe(
+      '/api/goblins/GBL-001/hoards/HRD-001/shinies/SH-001',
+    );
+  });
 });

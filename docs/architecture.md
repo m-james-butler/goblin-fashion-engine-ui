@@ -1,6 +1,6 @@
 # Goblin Fashion Engine UI Architecture (Current State)
 
-Last verified: March 29, 2026
+Last verified: March 30, 2026
 
 ## Purpose
 `goblin-fashion-engine-ui` is an Angular 19 standalone SPA that authenticates with Firebase and loads inventory from the backend API.
@@ -35,16 +35,26 @@ Canonical inventory flow:
 
 1. `HoardViewComponent` consumes canonical `Shiny` model only.
 2. `HoardService` orchestrates current goblin/hoard lookup.
-3. `ShinyApiService` performs HTTP calls and returns backend DTOs (`ShinyResponseDto[]`) only.
+3. `ShinyApiService` performs HTTP calls and returns backend DTOs (`ShinyResponseDto`) or `void`.
 4. `ShinyAdapter` maps DTOs to canonical frontend `Shiny`.
 5. `HoardService` returns canonical `Shiny[]` to UI.
+
+Current inventory API operations:
+- List shinies for hoard: `GET /api/goblins/{goblinId}/hoards/{hoardId}/shinies`
+- Create shiny in hoard: `POST /api/goblins/{goblinId}/hoards/{hoardId}/shinies`
+- Delete shiny in hoard: `DELETE /api/goblins/{goblinId}/hoards/{hoardId}/shinies/{shinyId}`
 
 Key files:
 - API service: `src/app/core/api/shiny-api.service.ts`
 - DTO contract: `src/app/core/api/dto/shiny-response.dto.ts`
+- Create DTO contract: `src/app/core/api/dto/shiny-create-request.dto.ts`
 - Adapter layer: `src/app/core/api/adapters/shiny.adapter.ts`
 - Orchestration: `src/app/core/api/hoard.service.ts`
 - UI consumer: `src/app/features/inventory/hoard-view/hoard-view.component.ts`
+
+Notes on create payload:
+- Backend currently validates `ShinyCreateRequestDto.id` as required (`@NotBlank`).
+- UI generates a client id (`crypto.randomUUID()` with fallback) before create submit.
 
 ## Inventory Detail Modal
 `HoardViewComponent` provides a detail modal for each shiny:
@@ -57,6 +67,18 @@ Key files:
 - Full notes render below summary/image with no truncation.
 - Remaining attributes render in a detail grid beneath notes.
 - Detail grid intentionally omits internal ownership ids (`goblinId`, `hoardId`) for now.
+- Modal header also includes `Delete Shiny` with confirmation.
+- Successful delete closes the detail modal immediately and removes the item from table state.
+
+## Inventory Create Modal
+`HoardViewComponent` includes `Add Shiny` create flow:
+- Header action button opens a dedicated create modal.
+- Form captures all non-auto-generated shiny fields used by the current backend contract.
+- `Image Upload` area is intentionally placeholder-only for now (no file upload integration yet).
+- On successful create:
+  - modal closes
+  - new shiny is inserted into local table state
+  - filter option lists are rebuilt
 
 ## Enum and Display Formatting
 Enum values are rendered as human-readable labels via a shared formatting layer:

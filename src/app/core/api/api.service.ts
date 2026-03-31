@@ -12,4 +12,10 @@ export class ApiService {
     const encodedHoardId = encodeURIComponent(hoardId);
     return `${this.apiBaseUrl}/api/goblins/${encodedGoblinId}/hoards/${encodedHoardId}/shinies`;
   }
+
+  buildGoblinHoardShinyPath(goblinId: string, hoardId: string, shinyId: string): string {
+    const basePath = this.buildGoblinHoardShiniesPath(goblinId, hoardId);
+    const encodedShinyId = encodeURIComponent(shinyId);
+    return `${basePath}/${encodedShinyId}`;
+  }
 }

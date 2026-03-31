@@ -35,6 +35,28 @@
   margin: 0;
 }
 
+.table-header {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+}
+
+.header-actions {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.add-shiny-button {
+  background: var(--mat-sys-primary, #90caf9);
+  border: 0;
+  border-radius: 0.35rem;
+  color: var(--mat-sys-on-primary, #001b2e);
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.4rem 0.7rem;
+}
+
 .table-wrapper {
   background: var(--mat-sys-surface-container, #383838);
   border: 1px solid var(--mat-sys-outline-variant, #5b5b5b);
@@ -176,12 +198,21 @@
   width: min(900px, 90vw);
 }
 
+.add-shiny-modal {
+  width: min(980px, 92vw);
+}
+
 .modal-header {
   align-items: center;
   border-bottom: 1px solid var(--mat-sys-outline-variant, #5b5b5b);
   display: flex;
   justify-content: space-between;
   padding: 0.75rem 1rem;
+}
+
+.modal-header-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .modal-title {
@@ -343,6 +374,154 @@ mat-chip {
   padding: 0.35rem 0.6rem;
 }
 
+.delete-shiny-button {
+  background: #d9534f;
+  border: 0;
+  border-radius: 0.35rem;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 0.35rem 0.6rem;
+}
+
+.delete-shiny-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.delete-error-message {
+  color: #ffb3b3;
+  font-weight: 600;
+  margin: 0;
+}
+
+.add-shiny-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.85rem 1rem 1rem;
+}
+
+.add-shiny-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-field span {
+  color: var(--mat-sys-on-surface-variant, #c7c7c7);
+  font-size: 0.85rem;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  background: var(--mat-sys-surface-container, #383838);
+  border: 1px solid var(--mat-sys-outline, #6b6b6b);
+  border-radius: 0.35rem;
+  color: var(--mat-sys-on-surface, #ffffff);
+  font: inherit;
+  padding: 0.45rem 0.5rem;
+}
+
+.form-fieldset {
+  background: var(--mat-sys-surface-container, #383838);
+  border: 1px solid var(--mat-sys-outline-variant, #5b5b5b);
+  border-radius: 0.4rem;
+  margin: 0;
+  padding: 0.65rem 0.75rem 0.75rem;
+}
+
+.form-fieldset legend {
+  color: var(--mat-sys-on-surface-variant, #c7c7c7);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0 0.25rem;
+}
+
+.checkbox-grid {
+  display: grid;
+  gap: 0.5rem 0.8rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.flags-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.checkbox-option {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.image-upload-placeholder {
+  background: var(--mat-sys-surface-container, #383838);
+  border: 1px dashed var(--mat-sys-outline, #6b6b6b);
+  border-radius: 0.4rem;
+  padding: 0.75rem;
+}
+
+.image-upload-placeholder h3 {
+  font-size: 0.95rem;
+  margin: 0 0 0.4rem;
+}
+
+.image-upload-placeholder p {
+  color: var(--mat-sys-on-surface-variant, #c7c7c7);
+  margin: 0 0 0.6rem;
+}
+
+.placeholder-upload-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.35rem;
+  color: var(--mat-sys-on-surface, #ffffff);
+  cursor: not-allowed;
+  padding: 0.4rem 0.65rem;
+}
+
+.add-error-message {
+  color: #ffb3b3;
+  font-weight: 600;
+  margin: 0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.cancel-button,
+.save-button {
+  border: 0;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.42rem 0.72rem;
+}
+
+.cancel-button {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--mat-sys-on-surface, #ffffff);
+}
+
+.save-button {
+  background: var(--mat-sys-secondary, #69f0ae);
+  color: var(--mat-sys-on-secondary, #003922);
+}
+
+.save-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 @media (max-width: 768px) {
   .hoard-view {
     width: 95vw;
@@ -362,5 +541,19 @@ mat-chip {
 
   .summary-row {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .header-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .add-shiny-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .checkbox-grid,
+  .flags-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

@@ -12,7 +12,16 @@
   } @else {
     <div class="table-header">
       <h1>Hoard View</h1>
-      <p>{{ filteredShinies.length }} shinies</p>
+      <div class="header-actions">
+        <p>{{ filteredShinies.length }} shinies</p>
+        <button
+          type="button"
+          class="add-shiny-button"
+          (click)="openAddShinyModal()"
+        >
+          Add Shiny
+        </button>
+      </div>
     </div>
 
     @if (shinies.length === 0) {
@@ -221,14 +230,24 @@
           <div class="image-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
             <div class="modal-header">
               <h2 class="modal-title">{{ getModalTitle(selectedShiny) }}</h2>
-              <button
-                type="button"
-                class="modal-close"
-                aria-label="Close image preview"
-                (click)="closeImageModal()"
-              >
-                Close
-              </button>
+              <div class="modal-header-actions">
+                <button
+                  type="button"
+                  class="delete-shiny-button"
+                  [disabled]="isDeletingShiny"
+                  (click)="deleteSelectedShiny()"
+                >
+                  {{ isDeletingShiny ? 'Deleting...' : 'Delete Shiny' }}
+                </button>
+                <button
+                  type="button"
+                  class="modal-close"
+                  aria-label="Close image preview"
+                  (click)="closeImageModal()"
+                >
+                  Close
+                </button>
+              </div>
             </div>
             <div class="modal-body">
               <div class="modal-top-grid">
@@ -302,6 +321,10 @@
                 <p class="modal-notes">{{ selectedShiny.notes || 'No notes available.' }}</p>
               </div>
 
+              @if (deleteErrorMessage) {
+                <p class="delete-error-message">{{ deleteErrorMessage }}</p>
+              }
+
               <div class="modal-details-block">
                 <h3>Details</h3>
                 <dl class="details-grid">
@@ -315,6 +338,301 @@
           </div>
         </div>
       }
+
+    }
+
+    @if (isAddModalOpen) {
+      <div class="image-modal-backdrop" (click)="closeAddShinyModal()">
+        <div class="image-modal add-shiny-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h2 class="modal-title">Add Shiny</h2>
+            <button
+              type="button"
+              class="modal-close"
+              aria-label="Close add shiny modal"
+              (click)="closeAddShinyModal()"
+            >
+              Close
+            </button>
+          </div>
+
+          <form class="add-shiny-form" #addShinyForm="ngForm" (ngSubmit)="submitNewShiny()">
+            <div class="add-shiny-grid">
+              <label class="form-field" for="shiny-name">
+                <span>Name</span>
+                <input
+                  id="shiny-name"
+                  type="text"
+                  name="name"
+                  [(ngModel)]="newShinyForm.name"
+                  maxlength="100"
+                />
+              </label>
+
+              <label class="form-field" for="shiny-count">
+                <span>Count *</span>
+                <input
+                  id="shiny-count"
+                  type="number"
+                  min="1"
+                  required
+                  name="count"
+                  [(ngModel)]="newShinyForm.count"
+                />
+              </label>
+
+              <label class="form-field" for="shiny-category">
+                <span>Category *</span>
+                <select
+                  id="shiny-category"
+                  required
+                  name="category"
+                  [(ngModel)]="newShinyForm.category"
+                >
+                  @for (value of categoryValues; track value) {
+                    <option [value]="value">{{ value | enumLabel }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="form-field" for="shiny-subcategory">
+                <span>Subcategory</span>
+                <input
+                  id="shiny-subcategory"
+                  type="text"
+                  name="subcategory"
+                  [(ngModel)]="newShinyForm.subcategory"
+                  maxlength="100"
+                />
+              </label>
+
+              <label class="form-field" for="shiny-layer">
+                <span>Layer *</span>
+                <select
+                  id="shiny-layer"
+                  required
+                  name="layer"
+                  [(ngModel)]="newShinyForm.layer"
+                >
+                  @for (value of layerValues; track value) {
+                    <option [value]="value">{{ value | enumLabel }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="form-field" for="shiny-formality">
+                <span>Formality *</span>
+                <select
+                  id="shiny-formality"
+                  required
+                  name="formality"
+                  [(ngModel)]="newShinyForm.formality"
+                >
+                  @for (value of formalityValues; track value) {
+                    <option [value]="value">{{ value | enumLabel }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="form-field" for="shiny-attention">
+                <span>Attention *</span>
+                <select
+                  id="shiny-attention"
+                  required
+                  name="attention"
+                  [(ngModel)]="newShinyForm.attention"
+                >
+                  @for (value of attentionValues; track value) {
+                    <option [value]="value">{{ value | enumLabel }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="form-field" for="shiny-status">
+                <span>Status *</span>
+                <select
+                  id="shiny-status"
+                  required
+                  name="status"
+                  [(ngModel)]="newShinyForm.status"
+                >
+                  @for (value of statusValues; track value) {
+                    <option [value]="value">{{ value | enumLabel }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="form-field" for="shiny-color-primary">
+                <span>Primary Colour *</span>
+                <select
+                  id="shiny-color-primary"
+                  required
+                  name="colorPrimary"
+                  [(ngModel)]="newShinyForm.colorPrimary"
+                >
+                  @for (value of colorValues; track value) {
+                    <option [value]="value">{{ value | enumLabel }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="form-field" for="shiny-color-secondary">
+                <span>Secondary Colour</span>
+                <select
+                  id="shiny-color-secondary"
+                  name="colorSecondary"
+                  [(ngModel)]="newShinyForm.colorSecondary"
+                >
+                  <option value="">None</option>
+                  @for (value of colorValues; track value) {
+                    <option [value]="value">{{ value | enumLabel }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="form-field" for="shiny-pattern">
+                <span>Pattern</span>
+                <select id="shiny-pattern" name="pattern" [(ngModel)]="newShinyForm.pattern">
+                  <option value="">None</option>
+                  @for (value of patternValues; track value) {
+                    <option [value]="value">{{ value | enumLabel }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="form-field" for="shiny-warmth">
+                <span>Warmth</span>
+                <input
+                  id="shiny-warmth"
+                  type="number"
+                  min="0"
+                  max="10"
+                  name="warmth"
+                  [(ngModel)]="newShinyForm.warmth"
+                />
+              </label>
+
+              <label class="form-field" for="shiny-fabric">
+                <span>Fabric</span>
+                <input
+                  id="shiny-fabric"
+                  type="text"
+                  name="fabric"
+                  [(ngModel)]="newShinyForm.fabric"
+                  maxlength="100"
+                />
+              </label>
+
+              <label class="form-field" for="shiny-fit">
+                <span>Fit</span>
+                <input
+                  id="shiny-fit"
+                  type="text"
+                  name="fit"
+                  [(ngModel)]="newShinyForm.fit"
+                  maxlength="100"
+                />
+              </label>
+
+              <label class="form-field" for="shiny-engine-policy">
+                <span>Engine Policy *</span>
+                <select
+                  id="shiny-engine-policy"
+                  required
+                  name="engineInclusionPolicy"
+                  [(ngModel)]="newShinyForm.engineInclusionPolicy"
+                >
+                  @for (value of engineInclusionPolicyValues; track value) {
+                    <option [value]="value">{{ value | enumLabel }}</option>
+                  }
+                </select>
+              </label>
+            </div>
+
+            <fieldset class="form-fieldset">
+              <legend>Contexts *</legend>
+              <div class="checkbox-grid">
+                @for (value of contextValues; track value) {
+                  <label class="checkbox-option">
+                    <input
+                      type="checkbox"
+                      [checked]="isContextSelected(value)"
+                      (change)="toggleContextSelection(value, $event)"
+                    />
+                    <span>{{ value | enumLabel }}</span>
+                  </label>
+                }
+              </div>
+            </fieldset>
+
+            <fieldset class="form-fieldset">
+              <legend>Flags</legend>
+              <div class="checkbox-grid flags-grid">
+                <label class="checkbox-option">
+                  <input
+                    type="checkbox"
+                    name="officeOk"
+                    [(ngModel)]="newShinyForm.officeOk"
+                  />
+                  <span>Office OK</span>
+                </label>
+                <label class="checkbox-option">
+                  <input
+                    type="checkbox"
+                    name="publicWear"
+                    [(ngModel)]="newShinyForm.publicWear"
+                  />
+                  <span>Public Wear</span>
+                </label>
+                <label class="checkbox-option">
+                  <input
+                    type="checkbox"
+                    name="includeInEngine"
+                    [(ngModel)]="newShinyForm.includeInEngine"
+                  />
+                  <span>Include In Engine</span>
+                </label>
+              </div>
+            </fieldset>
+
+            <label class="form-field" for="shiny-notes">
+              <span>Notes</span>
+              <textarea
+                id="shiny-notes"
+                rows="3"
+                name="notes"
+                [(ngModel)]="newShinyForm.notes"
+                maxlength="800"
+              ></textarea>
+            </label>
+
+            <div class="image-upload-placeholder">
+              <h3>Image Upload</h3>
+              <p>Image upload is coming soon. This is a placeholder for now.</p>
+              <button type="button" class="placeholder-upload-button" disabled>
+                Upload Image (Soon)
+              </button>
+            </div>
+
+            @if (addErrorMessage) {
+              <p class="add-error-message">{{ addErrorMessage }}</p>
+            }
+
+            <div class="form-actions">
+              <button type="button" class="cancel-button" (click)="closeAddShinyModal()">
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="save-button"
+                [disabled]="addShinyForm.invalid || isSubmittingNewShiny"
+              >
+                {{ isSubmittingNewShiny ? 'Saving...' : 'Save Shiny' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     }
   }
 </div>

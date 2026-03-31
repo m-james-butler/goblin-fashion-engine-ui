@@ -8,6 +8,7 @@ import { Shiny } from '../models/shiny.model';
 import { ShinyApiService } from './shiny-api.service';
 import { ShinyAdapter } from './adapters/shiny.adapter';
 import { ShinyResponseDto } from './dto/shiny-response.dto';
+import { ShinyCreateRequestDto } from './dto/shiny-create-request.dto';
 import {
   Attention,
   Color,
@@ -92,9 +93,12 @@ describe('HoardService', () => {
     ]);
     shinyApiServiceSpy = jasmine.createSpyObj<ShinyApiService>('ShinyApiService', [
       'getShiniesByGoblinAndHoard',
+      'createShinyForGoblinAndHoard',
+      'deleteShinyForGoblinAndHoard',
     ]);
     shinyAdapterSpy = jasmine.createSpyObj<ShinyAdapter>('ShinyAdapter', [
       'fromDtoList',
+      'fromDto',
     ]);
 
     TestBed.configureTestingModule({
@@ -176,5 +180,98 @@ describe('HoardService', () => {
     });
 
     expect(result).toEqual([]);
+  });
+
+  it('should create a shiny for the authenticated goblin default hoard', () => {
+    const createPayload: ShinyCreateRequestDto = {
+      id: 'SH-777',
+      name: 'Gold Ring',
+      count: 1,
+      category: 'ACCESSORY',
+      layer: 'ACCESSORY',
+      contexts: ['FORMAL'],
+      formality: 'FORMAL',
+      attention: 'MEDIUM',
+      colorPrimary: 'GOLD',
+      officeOk: true,
+      publicWear: true,
+      includeInEngine: true,
+      engineInclusionPolicy: 'NORMAL',
+      status: 'OWNED',
+    };
+
+    const createdDto: ShinyResponseDto = {
+      id: 'SH-777',
+      goblinId: 'GBL-001',
+      hoardId: 'HRD-001',
+      name: 'Gold Ring',
+      count: 1,
+      category: 'ACCESSORY',
+      layer: 'ACCESSORY',
+      contexts: ['FORMAL'],
+      formality: 'FORMAL',
+      attention: 'MEDIUM',
+      colorPrimary: 'GOLD',
+      officeOk: true,
+      publicWear: true,
+      includeInEngine: true,
+      engineInclusionPolicy: 'NORMAL',
+      status: 'OWNED',
+    };
+
+    const adaptedShiny: Shiny = {
+      id: 'SH-777',
+      goblinId: 'GBL-001',
+      hoardId: 'HRD-001',
+      name: 'Gold Ring',
+      count: 1,
+      category: ShinyCategory.ACCESSORY,
+      subcategory: 'Ring',
+      layer: Layer.ACCESSORY,
+      contexts: [Context.FORMAL],
+      formality: Formality.FORMAL,
+      attention: Attention.MEDIUM,
+      colorPrimary: Color.GOLD,
+      officeOk: true,
+      publicWear: true,
+      includeInEngine: true,
+      engineInclusionPolicy: EngineInclusionPolicy.NORMAL,
+      status: ShinyStatus.OWNED,
+    };
+
+    goblinServiceSpy.getCurrentGoblin.and.returnValue(of(currentGoblin));
+    shinyApiServiceSpy.createShinyForGoblinAndHoard.and.returnValue(of(createdDto));
+    shinyAdapterSpy.fromDto.and.returnValue(adaptedShiny);
+
+    let result: Shiny | undefined;
+    service.createShinyForCurrentHoard(createPayload).subscribe((created) => {
+      result = created;
+    });
+
+    expect(shinyApiServiceSpy.createShinyForGoblinAndHoard).toHaveBeenCalledOnceWith(
+      'GBL-001',
+      'HRD-001',
+      createPayload,
+    );
+    expect(shinyAdapterSpy.fromDto).toHaveBeenCalledOnceWith(createdDto);
+    expect(result).toBeDefined();
+    expect(result?.id).toBe('SH-777');
+  });
+
+  it('should delete a shiny for the authenticated goblin default hoard', () => {
+    goblinServiceSpy.getCurrentGoblin.and.returnValue(of(currentGoblin));
+    shinyApiServiceSpy.deleteShinyForGoblinAndHoard.and.returnValue(of(void 0));
+
+    let completed = false;
+    service.deleteShinyForCurrentHoard('SH-DELETE-1').subscribe(() => {
+      completed = true;
+    });
+
+    expect(shinyApiServiceSpy.deleteShinyForGoblinAndHoard).toHaveBeenCalledOnceWith(
+      'GBL-001',
+      'HRD-001',
+      'SH-DELETE-1',
+    );
+    expect(completed).toBeTrue();
   });
 });

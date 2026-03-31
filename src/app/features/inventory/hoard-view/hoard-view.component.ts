@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
@@ -17,9 +18,21 @@ import { MatChipsModule } from '@angular/material/chips';
 import { HoardService } from '../../../core/api/hoard.service';
 import { Shiny } from '../../../core/models/shiny.model';
 import { AppLoggerService } from '../../../core/logging/app-logger.service';
-import { Color } from '../../../core/models/enums';
+import {
+  Attention,
+  Color,
+  Context,
+  EngineInclusionPolicy,
+  Formality,
+  Layer,
+  Pattern,
+  ShinyCategory,
+  ShinyStatus,
+  enumValues,
+} from '../../../core/models/enums';
 import { EnumLabelPipe } from '../../../core/pipes/enum-label.pipe';
 import { formatEnumLabel } from '../../../core/utils/enum-label.util';
+import { ShinyCreateRequestDto } from '../../../core/api/dto/shiny-create-request.dto';
 
 type FilterKey = 'category' | 'context' | 'status' | 'color';
 type SortKey = '' | 'category' | 'context' | 'status' | 'color';
@@ -29,12 +42,37 @@ type ColorPresentation = {
   displayLabel: string;
 };
 
+type CreateShinyFormModel = {
+  name: string;
+  notes: string;
+  count: number;
+  category: ShinyCategory;
+  subcategory: string;
+  layer: Layer;
+  contexts: Context[];
+  formality: Formality;
+  attention: Attention;
+  colorPrimary: Color;
+  colorSecondary: '' | Color;
+  pattern: '' | Pattern;
+  fabric: string;
+  fit: string;
+  warmth: string;
+  officeOk: boolean;
+  publicWear: boolean;
+  includeInEngine: boolean;
+  engineInclusionPolicy: EngineInclusionPolicy;
+  imagePathPlaceholder: string;
+  status: ShinyStatus;
+};
+
 @Component({
   selector: 'app-hoard-view',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
+    FormsModule,
     MatProgressSpinnerModule,
     MatSortModule,
     MatTableModule,
@@ -55,9 +93,15 @@ export class HoardViewComponent implements OnInit {
   filteredShinies: Shiny[] = [];
   isLoading = true;
   errorMessage: string | null = null;
+  addErrorMessage: string | null = null;
+  deleteErrorMessage: string | null = null;
   selectedImagePath: string | null = null;
   selectedImageAlt = '';
   selectedShiny: Shiny | null = null;
+  isDeletingShiny = false;
+  isAddModalOpen = false;
+  isSubmittingNewShiny = false;
+  newShinyForm: CreateShinyFormModel = this.createDefaultShinyForm();
   sortState: Sort = { active: '', direction: '' };
   filters: Record<FilterKey, string> = {
     category: '',
@@ -79,6 +123,17 @@ export class HoardViewComponent implements OnInit {
     'status',
     'notes',
   ];
+  readonly categoryValues = enumValues(ShinyCategory) as ShinyCategory[];
+  readonly layerValues = enumValues(Layer) as Layer[];
+  readonly contextValues = enumValues(Context) as Context[];
+  readonly formalityValues = enumValues(Formality) as Formality[];
+  readonly attentionValues = enumValues(Attention) as Attention[];
+  readonly colorValues = enumValues(Color) as Color[];
+  readonly patternValues = enumValues(Pattern) as Pattern[];
+  readonly engineInclusionPolicyValues = enumValues(
+    EngineInclusionPolicy,
+  ) as EngineInclusionPolicy[];
+  readonly statusValues = enumValues(ShinyStatus) as ShinyStatus[];
 
   ngOnInit(): void {
     this.loadShinies();
@@ -129,6 +184,134 @@ export class HoardViewComponent implements OnInit {
     this.selectedShiny = null;
     this.selectedImagePath = null;
     this.selectedImageAlt = '';
+    this.deleteErrorMessage = null;
+    this.isDeletingShiny = false;
+  }
+
+  openAddShinyModal(): void {
+    this.newShinyForm = this.createDefaultShinyForm();
+    this.addErrorMessage = null;
+    this.isAddModalOpen = true;
+  }
+
+  closeAddShinyModal(): void {
+    this.isAddModalOpen = false;
+    this.isSubmittingNewShiny = false;
+    this.addErrorMessage = null;
+  }
+
+  isContextSelected(context: Context): boolean {
+    return this.newShinyForm.contexts.includes(context);
+  }
+
+  toggleContextSelection(context: Context, event: Event): void {
+    const target = event.target as HTMLInputElement;
+    if (target.checked) {
+      if (!this.newShinyForm.contexts.includes(context)) {
+        this.newShinyForm.contexts = [...this.newShinyForm.contexts, context];
+      }
+      return;
+    }
+
+    this.newShinyForm.contexts = this.newShinyForm.contexts.filter(
+      (selected) => selected !== context,
+    );
+  }
+
+  submitNewShiny(): void {
+    if (this.isSubmittingNewShiny) {
+      return;
+    }
+
+    if (this.newShinyForm.contexts.length === 0) {
+      this.addErrorMessage = 'Select at least one context.';
+      return;
+    }
+
+    this.addErrorMessage = null;
+    this.isSubmittingNewShiny = true;
+
+    const payload: ShinyCreateRequestDto = {
+      id: this.createNewShinyId(),
+      name: this.toUndefinedIfBlank(this.newShinyForm.name),
+      notes: this.toUndefinedIfBlank(this.newShinyForm.notes),
+      count: this.newShinyForm.count,
+      category: this.newShinyForm.category,
+      subcategory: this.toUndefinedIfBlank(this.newShinyForm.subcategory),
+      layer: this.newShinyForm.layer,
+      contexts: this.newShinyForm.contexts,
+      formality: this.newShinyForm.formality,
+      attention: this.newShinyForm.attention,
+      colorPrimary: this.newShinyForm.colorPrimary,
+      colorSecondary: this.toOptionalEnumValue(this.newShinyForm.colorSecondary),
+      pattern: this.toOptionalEnumValue(this.newShinyForm.pattern),
+      fabric: this.toUndefinedIfBlank(this.newShinyForm.fabric),
+      fit: this.toUndefinedIfBlank(this.newShinyForm.fit),
+      warmth: this.toOptionalNumber(this.newShinyForm.warmth),
+      officeOk: this.newShinyForm.officeOk,
+      publicWear: this.newShinyForm.publicWear,
+      includeInEngine: this.newShinyForm.includeInEngine,
+      engineInclusionPolicy: this.newShinyForm.engineInclusionPolicy,
+      imagePath: this.toUndefinedIfBlank(this.newShinyForm.imagePathPlaceholder),
+      status: this.newShinyForm.status,
+    };
+
+    this.hoardService
+      .createShinyForCurrentHoard(payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (createdShiny) => {
+          this.shinies = [createdShiny, ...this.shinies];
+          this.buildFilterOptions();
+          this.applyFilters();
+          this.closeAddShinyModal();
+          this.changeDetectorRef.markForCheck();
+        },
+        error: (error) => {
+          this.logger.error('hoard.shiny.create.failed', { error });
+          this.addErrorMessage = 'Unable to add shiny right now. Please try again.';
+          this.isSubmittingNewShiny = false;
+          this.changeDetectorRef.markForCheck();
+        },
+      });
+  }
+
+  deleteSelectedShiny(): void {
+    if (!this.selectedShiny || this.isDeletingShiny) {
+      return;
+    }
+
+    const shinyToDelete = this.selectedShiny;
+    const shinyLabel = shinyToDelete.name || shinyToDelete.id;
+    const shouldDelete = globalThis.confirm(
+      `Delete "${shinyLabel}"? This action cannot be undone.`,
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    this.deleteErrorMessage = null;
+    this.isDeletingShiny = true;
+
+    this.hoardService
+      .deleteShinyForCurrentHoard(shinyToDelete.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.closeImageModal();
+          this.shinies = this.shinies.filter((shiny) => shiny.id !== shinyToDelete.id);
+          this.buildFilterOptions();
+          this.applyFilters();
+          this.changeDetectorRef.markForCheck();
+        },
+        error: (error) => {
+          this.logger.error('hoard.shiny.delete.failed', { error, shinyId: shinyToDelete.id });
+          this.deleteErrorMessage = 'Unable to delete shiny right now. Please try again.';
+          this.isDeletingShiny = false;
+          this.changeDetectorRef.markForCheck();
+        },
+      });
   }
 
   getModalTitle(shiny: Shiny | null): string {
@@ -249,6 +432,68 @@ export class HoardViewComponent implements OnInit {
       return '-';
     }
     return String(value);
+  }
+
+  private toUndefinedIfBlank(value: string): string | undefined {
+    const trimmedValue = value.trim();
+    return trimmedValue ? trimmedValue : undefined;
+  }
+
+  private toOptionalNumber(value: string | number | null | undefined): number | undefined {
+    if (value === null || value === undefined) {
+      return undefined;
+    }
+
+    if (typeof value === 'number') {
+      return Number.isFinite(value) ? value : undefined;
+    }
+
+    const trimmedValue = value.trim();
+    if (!trimmedValue) {
+      return undefined;
+    }
+
+    const parsedValue = Number(trimmedValue);
+    return Number.isFinite(parsedValue) ? parsedValue : undefined;
+  }
+
+  private toOptionalEnumValue<T extends string>(value: '' | T): T | undefined {
+    return value || undefined;
+  }
+
+  private createDefaultShinyForm(): CreateShinyFormModel {
+    return {
+      name: '',
+      notes: '',
+      count: 1,
+      category: ShinyCategory.TOP,
+      subcategory: '',
+      layer: Layer.BASE,
+      contexts: [Context.CASUAL],
+      formality: Formality.CASUAL,
+      attention: Attention.LOW,
+      colorPrimary: Color.BLACK,
+      colorSecondary: '',
+      pattern: '',
+      fabric: '',
+      fit: '',
+      warmth: '',
+      officeOk: false,
+      publicWear: true,
+      includeInEngine: true,
+      engineInclusionPolicy: EngineInclusionPolicy.NORMAL,
+      imagePathPlaceholder: '',
+      status: ShinyStatus.OWNED,
+    };
+  }
+
+  private createNewShinyId(): string {
+    const randomUuid = globalThis.crypto?.randomUUID?.();
+    if (randomUuid) {
+      return randomUuid;
+    }
+
+    return `shiny-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
   }
 
   private resetFilters(): void {

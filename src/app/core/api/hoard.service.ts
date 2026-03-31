@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { GoblinService } from '../auth/goblin.service';
@@ -8,6 +8,7 @@ import { Shiny } from '../models/shiny.model';
 import { AppLoggerService } from '../logging/app-logger.service';
 import { ShinyApiService } from './shiny-api.service';
 import { ShinyAdapter } from './adapters/shiny.adapter';
+import { ShinyCreateRequestDto } from './dto/shiny-create-request.dto';
 
 type HoardWithShinies = Hoard & { shinies: Shiny[] };
 
@@ -74,6 +75,52 @@ export class HoardService {
       catchError((error) => {
         this.logger.error('hoard.shinies.lookup.failed', { error });
         return of([]);
+      }),
+    );
+  }
+
+  createShinyForCurrentHoard(payload: ShinyCreateRequestDto): Observable<Shiny> {
+    return this.goblinService.getCurrentGoblin().pipe(
+      switchMap((goblin) => {
+        if (!goblin) {
+          this.logger.warn('hoard.shiny.create.skipped.no-authenticated-user');
+          return throwError(() => new Error('No authenticated goblin was found.'));
+        }
+
+        return this.shinyApiService
+          .createShinyForGoblinAndHoard(goblin.id, goblin.defaultHoardId, payload)
+          .pipe(
+            map((dto) => {
+              const shiny = this.shinyAdapter.fromDto(dto);
+              this.logger.info('hoard.shiny.create.succeeded', {
+                hoardId: goblin.defaultHoardId,
+                shinyId: shiny.id,
+              });
+              return shiny;
+            }),
+          );
+      }),
+    );
+  }
+
+  deleteShinyForCurrentHoard(shinyId: string): Observable<void> {
+    return this.goblinService.getCurrentGoblin().pipe(
+      switchMap((goblin) => {
+        if (!goblin) {
+          this.logger.warn('hoard.shiny.delete.skipped.no-authenticated-user', { shinyId });
+          return throwError(() => new Error('No authenticated goblin was found.'));
+        }
+
+        return this.shinyApiService
+          .deleteShinyForGoblinAndHoard(goblin.id, goblin.defaultHoardId, shinyId)
+          .pipe(
+            map(() => {
+              this.logger.info('hoard.shiny.delete.succeeded', {
+                hoardId: goblin.defaultHoardId,
+                shinyId,
+              });
+            }),
+          );
       }),
     );
   }

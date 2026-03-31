@@ -15,6 +15,7 @@ import {
   ShinyCategory,
   ShinyStatus,
 } from '../../../core/models/enums';
+import { ShinyCreateRequestDto } from '../../../core/api/dto/shiny-create-request.dto';
 
 describe('HoardViewComponent', () => {
   let component: HoardViewComponent;
@@ -45,7 +46,18 @@ describe('HoardViewComponent', () => {
   beforeEach(async () => {
     hoardServiceSpy = jasmine.createSpyObj<HoardService>('HoardService', [
       'getShiniesForCurrentHoard',
+      'createShinyForCurrentHoard',
+      'deleteShinyForCurrentHoard',
     ]);
+    hoardServiceSpy.createShinyForCurrentHoard.and.returnValue(
+      of(
+        createShiny({
+          id: 'created-1',
+          name: 'Created Shiny',
+        }),
+      ),
+    );
+    hoardServiceSpy.deleteShinyForCurrentHoard.and.returnValue(of(void 0));
 
     await TestBed.configureTestingModule({
       imports: [HoardViewComponent],
@@ -208,5 +220,72 @@ describe('HoardViewComponent', () => {
     const icon = host.querySelector('.image-fallback-icon');
     expect(icon).toBeTruthy();
     expect(icon?.classList.contains('fa-image')).toBeTrue();
+  });
+
+  it('opens add shiny modal from add button', () => {
+    hoardServiceSpy.getShiniesForCurrentHoard.and.returnValue(of([createShiny()]));
+
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const addButton = host.querySelector('.add-shiny-button') as HTMLButtonElement;
+    addButton.click();
+    fixture.detectChanges();
+
+    expect(host.querySelector('.add-shiny-modal')).toBeTruthy();
+    expect(host.textContent).toContain('Add Shiny');
+  });
+
+  it('submits a new shiny from modal form', () => {
+    hoardServiceSpy.getShiniesForCurrentHoard.and.returnValue(of([createShiny()]));
+
+    fixture.detectChanges();
+    component.openAddShinyModal();
+
+    component.newShinyForm = {
+      ...component.newShinyForm,
+      name: 'New Submission',
+      contexts: [Context.CASUAL, Context.OFFICE],
+      category: ShinyCategory.TOP,
+      layer: Layer.BASE,
+      formality: Formality.CASUAL,
+      attention: Attention.MEDIUM,
+      colorPrimary: Color.BLACK,
+      engineInclusionPolicy: EngineInclusionPolicy.NORMAL,
+      status: ShinyStatus.OWNED,
+    };
+
+    const created = createShiny({
+      id: 'created-2',
+      name: 'New Submission',
+    });
+    hoardServiceSpy.createShinyForCurrentHoard.and.returnValue(of(created));
+
+    component.submitNewShiny();
+
+    expect(hoardServiceSpy.createShinyForCurrentHoard).toHaveBeenCalled();
+    const submittedPayload = hoardServiceSpy.createShinyForCurrentHoard.calls.mostRecent()
+      .args[0] as ShinyCreateRequestDto;
+    expect(submittedPayload.id).toBeTruthy();
+    expect(submittedPayload.name).toBe('New Submission');
+    expect(submittedPayload.contexts).toEqual([Context.CASUAL, Context.OFFICE]);
+    expect(component.shinies[0].id).toBe('created-2');
+    expect(component.isAddModalOpen).toBeFalse();
+  });
+
+  it('deletes selected shiny from detail modal after confirmation', () => {
+    const shinyToDelete = createShiny({ id: 'delete-me', name: 'Delete Me' });
+    hoardServiceSpy.getShiniesForCurrentHoard.and.returnValue(of([shinyToDelete]));
+    hoardServiceSpy.deleteShinyForCurrentHoard.and.returnValue(of(void 0));
+    spyOn(window, 'confirm').and.returnValue(true);
+
+    fixture.detectChanges();
+    component.openDetailModal(shinyToDelete);
+
+    component.deleteSelectedShiny();
+
+    expect(hoardServiceSpy.deleteShinyForCurrentHoard).toHaveBeenCalledOnceWith('delete-me');
+    expect(component.shinies.find((shiny) => shiny.id === 'delete-me')).toBeUndefined();
+    expect(component.selectedShiny).toBeNull();
   });
 });
