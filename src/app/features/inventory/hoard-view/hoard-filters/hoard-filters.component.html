@@ -1,0 +1,68 @@
+<div class="filters">
+  <label class="filter-field gfe-filter-field" for="shiny-search-filter">
+    <span>Search</span>
+    <input
+      id="shiny-search-filter"
+      type="search"
+      [value]="searchQuery"
+      placeholder="Search by name, id, notes..."
+      (input)="onSearchInput($event)"
+    />
+  </label>
+
+  <label class="filter-field gfe-filter-field" for="category-filter">
+    <span>Category</span>
+    <select
+      id="category-filter"
+      [value]="filters.category"
+      (change)="onFilterChange('category', $event)"
+    >
+      <option value="">All</option>
+      @for (option of categoryOptions; track option) {
+        <option [value]="option">{{ option | enumLabel }}</option>
+      }
+    </select>
+  </label>
+
+  <label class="filter-field gfe-filter-field" for="context-filter">
+    <span>Context</span>
+    <select
+      id="context-filter"
+      [value]="filters.context"
+      (change)="onFilterChange('context', $event)"
+    >
+      <option value="">All</option>
+      @for (option of contextOptions; track option) {
+        <option [value]="option">{{ option | enumLabel }}</option>
+      }
+    </select>
+  </label>
+
+  <label class="filter-field gfe-filter-field" for="status-filter">
+    <span>Status</span>
+    <select
+      id="status-filter"
+      [value]="filters.status"
+      (change)="onFilterChange('status', $event)"
+    >
+      <option value="">All</option>
+      @for (option of statusOptions; track option) {
+        <option [value]="option">{{ option | enumLabel }}</option>
+      }
+    </select>
+  </label>
+
+  <label class="filter-field gfe-filter-field" for="color-filter">
+    <span>Color</span>
+    <select
+      id="color-filter"
+      [value]="filters.color"
+      (change)="onFilterChange('color', $event)"
+    >
+      <option value="">All</option>
+      @for (option of colorOptions; track option) {
+        <option [value]="option">{{ option | enumLabel }}</option>
+      }
+    </select>
+  </label>
+</div>

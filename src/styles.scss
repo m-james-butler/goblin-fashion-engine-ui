@@ -9,3 +9,214 @@ body {
   background: var(--mat-sys-surface, #303030);
   color: var(--mat-sys-on-surface, #ffffff);
 }
+
+/* Shared UI primitives for feature modules using Material dark tokens. */
+:root {
+  --gfe-surface-panel: var(--mat-sys-surface-container, #383838);
+  --gfe-surface-panel-high: var(--mat-sys-surface-container-high, #444444);
+  --gfe-outline: var(--mat-sys-outline, #6b6b6b);
+  --gfe-outline-variant: var(--mat-sys-outline-variant, #5b5b5b);
+  --gfe-muted-text: var(--mat-sys-on-surface-variant, #c7c7c7);
+  --gfe-radius-sm: 0.35rem;
+  --gfe-radius-md: 0.5rem;
+}
+
+.gfe-btn {
+  border: 0;
+  border-radius: var(--gfe-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.gfe-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.gfe-btn-primary {
+  background: var(--mat-sys-secondary, #69f0ae);
+  color: var(--mat-sys-on-secondary, #003922);
+}
+
+.gfe-btn-accent {
+  background: var(--mat-sys-secondary, #69f0ae);
+  color: var(--mat-sys-on-secondary, #003922);
+}
+
+.gfe-btn-danger {
+  background: #d9534f;
+  color: #ffffff;
+}
+
+.gfe-btn-neutral {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--mat-sys-on-surface, #ffffff);
+}
+
+.mat-mdc-menu-panel .menu-delete-action {
+  color: #ffb3b3;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-field span {
+  color: var(--gfe-muted-text);
+  font-size: 0.85rem;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  background: var(--gfe-surface-panel);
+  border: 1px solid var(--gfe-outline);
+  border-radius: var(--gfe-radius-sm);
+  color: var(--mat-sys-on-surface, #ffffff);
+  font: inherit;
+  padding: 0.45rem 0.5rem;
+}
+
+.form-fieldset {
+  background: var(--gfe-surface-panel);
+  border: 1px solid var(--gfe-outline-variant);
+  border-radius: 0.4rem;
+  margin: 0;
+  padding: 0.65rem 0.75rem 0.75rem;
+}
+
+.form-fieldset legend {
+  color: var(--gfe-muted-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0 0.25rem;
+}
+
+.checkbox-grid {
+  display: grid;
+  gap: 0.5rem 0.8rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.flags-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.checkbox-option {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.image-upload-placeholder {
+  background: var(--gfe-surface-panel);
+  border: 1px dashed var(--gfe-outline);
+  border-radius: 0.4rem;
+  padding: 0.75rem;
+}
+
+.placeholder-upload-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--gfe-radius-sm);
+  color: var(--mat-sys-on-surface, #ffffff);
+  padding: 0.4rem 0.65rem;
+}
+
+.gfe-inline-error {
+  color: #ffb3b3;
+  font-weight: 600;
+  margin: 0;
+}
+
+.gfe-surface-card {
+  background: var(--gfe-surface-panel);
+  border: 1px solid var(--gfe-outline-variant);
+  border-radius: var(--gfe-radius-md);
+}
+
+.gfe-table-wrapper {
+  background: var(--gfe-surface-panel);
+  border: 1px solid var(--gfe-outline-variant);
+  border-radius: var(--gfe-radius-md);
+  width: 100%;
+}
+
+.gfe-modal-backdrop {
+  align-items: center;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  position: fixed;
+  z-index: 1000;
+}
+
+.gfe-modal {
+  background: var(--gfe-surface-panel-high);
+  border: 1px solid var(--gfe-outline-variant);
+  border-radius: var(--gfe-radius-md);
+  max-height: 90vh;
+  max-width: 90vw;
+  overflow: auto;
+  width: min(900px, 90vw);
+}
+
+.gfe-modal-header {
+  align-items: center;
+  border-bottom: 1px solid var(--gfe-outline-variant);
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+}
+
+.gfe-modal-title {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.gfe-filter-field {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+  gap: 0.35rem;
+}
+
+.gfe-filter-field span {
+  color: var(--gfe-muted-text);
+}
+
+.gfe-filter-field input,
+.gfe-filter-field select {
+  background: var(--gfe-surface-panel-high);
+  border: 1px solid var(--gfe-outline);
+  border-radius: var(--gfe-radius-sm);
+  color: var(--mat-sys-on-surface, #ffffff);
+  font: inherit;
+  padding: 0.45rem 0.5rem;
+}
+
+.gfe-color-pill {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  color: var(--mat-sys-on-surface, #ffffff);
+  display: inline-flex;
+  gap: 0.4rem;
+  max-width: 100%;
+  padding: 0.2rem 0.58rem;
+  white-space: nowrap;
+}
+
+.gfe-color-swatch {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+  display: inline-block;
+  flex: 0 0 auto;
+  height: 0.78rem;
+  width: 0.78rem;
+}

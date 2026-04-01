@@ -131,4 +131,101 @@ describe('ShinyApiService', () => {
 
     expect(completed).toBeTrue();
   });
+
+  it('should put a shiny update payload to the shiny item endpoint', () => {
+    let updatedName = '';
+    service
+      .updateShinyForGoblinAndHoard('GBL-001', 'HRD-001', 'SH-001', {
+        id: 'SH-001',
+        name: 'Updated Vest',
+        count: 1,
+        category: 'TOP',
+        layer: 'MID',
+        contexts: ['OFFICE'],
+        formality: 'SMART_CASUAL',
+        attention: 'LOW',
+        colorPrimary: 'NAVY',
+        officeOk: true,
+        publicWear: true,
+        includeInEngine: true,
+        engineInclusionPolicy: 'NORMAL',
+        status: 'OWNED',
+      })
+      .subscribe((response) => {
+        updatedName = response.name ?? '';
+      });
+
+    const request = httpMock.expectOne('/api/goblins/GBL-001/hoards/HRD-001/shinies/SH-001');
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual(
+      jasmine.objectContaining({
+        id: 'SH-001',
+        name: 'Updated Vest',
+      }),
+    );
+
+    request.flush({
+      id: 'SH-001',
+      goblinId: 'GBL-001',
+      hoardId: 'HRD-001',
+      name: 'Updated Vest',
+      count: 1,
+      category: 'TOP',
+      layer: 'MID',
+      contexts: ['OFFICE'],
+      formality: 'SMART_CASUAL',
+      attention: 'LOW',
+      colorPrimary: 'NAVY',
+      officeOk: true,
+      publicWear: true,
+      includeInEngine: true,
+      engineInclusionPolicy: 'NORMAL',
+      status: 'OWNED',
+    });
+
+    expect(updatedName).toBe('Updated Vest');
+  });
+
+  it('should patch a shiny payload to the shiny item endpoint', () => {
+    let patchedStatus = '';
+    service
+      .patchShinyForGoblinAndHoard('GBL-001', 'HRD-001', 'SH-001', {
+        status: 'DONATE',
+        notes: 'moved to giveaway pile',
+      })
+      .subscribe((response) => {
+        patchedStatus = response.status;
+      });
+
+    const request = httpMock.expectOne('/api/goblins/GBL-001/hoards/HRD-001/shinies/SH-001');
+    expect(request.request.method).toBe('PATCH');
+    expect(request.request.body).toEqual(
+      jasmine.objectContaining({
+        status: 'DONATE',
+        notes: 'moved to giveaway pile',
+      }),
+    );
+
+    request.flush({
+      id: 'SH-001',
+      goblinId: 'GBL-001',
+      hoardId: 'HRD-001',
+      name: 'Updated Vest',
+      count: 1,
+      category: 'TOP',
+      layer: 'MID',
+      contexts: ['OFFICE'],
+      formality: 'SMART_CASUAL',
+      attention: 'LOW',
+      colorPrimary: 'NAVY',
+      officeOk: true,
+      publicWear: true,
+      includeInEngine: true,
+      engineInclusionPolicy: 'NORMAL',
+      status: 'DONATE',
+      notes: 'moved to giveaway pile',
+    });
+
+    expect(patchedStatus).toBe('DONATE');
+  });
 });

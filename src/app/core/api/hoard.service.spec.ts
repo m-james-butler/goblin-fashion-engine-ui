@@ -9,6 +9,8 @@ import { ShinyApiService } from './shiny-api.service';
 import { ShinyAdapter } from './adapters/shiny.adapter';
 import { ShinyResponseDto } from './dto/shiny-response.dto';
 import { ShinyCreateRequestDto } from './dto/shiny-create-request.dto';
+import { ShinyUpdateRequestDto } from './dto/shiny-update-request.dto';
+import { ShinyPatchRequestDto } from './dto/shiny-patch-request.dto';
 import {
   Attention,
   Color,
@@ -94,6 +96,8 @@ describe('HoardService', () => {
     shinyApiServiceSpy = jasmine.createSpyObj<ShinyApiService>('ShinyApiService', [
       'getShiniesByGoblinAndHoard',
       'createShinyForGoblinAndHoard',
+      'updateShinyForGoblinAndHoard',
+      'patchShinyForGoblinAndHoard',
       'deleteShinyForGoblinAndHoard',
     ]);
     shinyAdapterSpy = jasmine.createSpyObj<ShinyAdapter>('ShinyAdapter', [
@@ -274,4 +278,142 @@ describe('HoardService', () => {
     );
     expect(completed).toBeTrue();
   });
+
+  it('should update a shiny for the authenticated goblin default hoard', () => {
+    const updatePayload: ShinyUpdateRequestDto = {
+      id: 'SH-001',
+      name: 'Updated Ring',
+      count: 1,
+      category: 'ACCESSORY',
+      layer: 'ACCESSORY',
+      contexts: ['FORMAL'],
+      formality: 'FORMAL',
+      attention: 'MEDIUM',
+      colorPrimary: 'GOLD',
+      officeOk: true,
+      publicWear: true,
+      includeInEngine: true,
+      engineInclusionPolicy: 'NORMAL',
+      status: 'OWNED',
+    };
+
+    const updatedDto: ShinyResponseDto = {
+      id: 'SH-001',
+      goblinId: 'GBL-001',
+      hoardId: 'HRD-001',
+      name: 'Updated Ring',
+      count: 1,
+      category: 'ACCESSORY',
+      layer: 'ACCESSORY',
+      contexts: ['FORMAL'],
+      formality: 'FORMAL',
+      attention: 'MEDIUM',
+      colorPrimary: 'GOLD',
+      officeOk: true,
+      publicWear: true,
+      includeInEngine: true,
+      engineInclusionPolicy: 'NORMAL',
+      status: 'OWNED',
+    };
+
+    const adaptedShiny = createShiny({
+      id: 'SH-001',
+      name: 'Updated Ring',
+      contexts: [Context.FORMAL],
+      formality: Formality.FORMAL,
+      attention: Attention.MEDIUM,
+    });
+
+    goblinServiceSpy.getCurrentGoblin.and.returnValue(of(currentGoblin));
+    shinyApiServiceSpy.updateShinyForGoblinAndHoard.and.returnValue(of(updatedDto));
+    shinyAdapterSpy.fromDto.and.returnValue(adaptedShiny);
+
+    let result: Shiny | undefined;
+    service.updateShinyForCurrentHoard('SH-001', updatePayload).subscribe((updated) => {
+      result = updated;
+    });
+
+    expect(shinyApiServiceSpy.updateShinyForGoblinAndHoard).toHaveBeenCalledOnceWith(
+      'GBL-001',
+      'HRD-001',
+      'SH-001',
+      updatePayload,
+    );
+    expect(shinyAdapterSpy.fromDto).toHaveBeenCalledOnceWith(updatedDto);
+    expect(result?.name).toBe('Updated Ring');
+  });
+
+  it('should patch a shiny for the authenticated goblin default hoard', () => {
+    const patchPayload: ShinyPatchRequestDto = {
+      status: 'DONATE',
+      notes: 'Moving this one out',
+    };
+
+    const patchedDto: ShinyResponseDto = {
+      id: 'SH-001',
+      goblinId: 'GBL-001',
+      hoardId: 'HRD-001',
+      name: 'Ring',
+      count: 1,
+      category: 'ACCESSORY',
+      layer: 'ACCESSORY',
+      contexts: ['CASUAL'],
+      formality: 'CASUAL',
+      attention: 'LOW',
+      colorPrimary: 'GOLD',
+      officeOk: true,
+      publicWear: true,
+      includeInEngine: true,
+      engineInclusionPolicy: 'NORMAL',
+      status: 'DONATE',
+      notes: 'Moving this one out',
+    };
+
+    const adaptedShiny = createShiny({
+      id: 'SH-001',
+      status: ShinyStatus.DONATE,
+      notes: 'Moving this one out',
+    });
+
+    goblinServiceSpy.getCurrentGoblin.and.returnValue(of(currentGoblin));
+    shinyApiServiceSpy.patchShinyForGoblinAndHoard.and.returnValue(of(patchedDto));
+    shinyAdapterSpy.fromDto.and.returnValue(adaptedShiny);
+
+    let result: Shiny | undefined;
+    service.patchShinyForCurrentHoard('SH-001', patchPayload).subscribe((patched) => {
+      result = patched;
+    });
+
+    expect(shinyApiServiceSpy.patchShinyForGoblinAndHoard).toHaveBeenCalledOnceWith(
+      'GBL-001',
+      'HRD-001',
+      'SH-001',
+      patchPayload,
+    );
+    expect(shinyAdapterSpy.fromDto).toHaveBeenCalledOnceWith(patchedDto);
+    expect(result?.status).toBe(ShinyStatus.DONATE);
+  });
 });
+
+function createShiny(overrides: Partial<Shiny> = {}): Shiny {
+  return {
+    id: 'SH-001',
+    goblinId: 'GBL-001',
+    hoardId: 'HRD-001',
+    name: 'Ring',
+    count: 1,
+    category: ShinyCategory.ACCESSORY,
+    subcategory: 'Ring',
+    layer: Layer.ACCESSORY,
+    contexts: [Context.CASUAL],
+    formality: Formality.CASUAL,
+    attention: Attention.LOW,
+    colorPrimary: Color.GOLD,
+    officeOk: true,
+    publicWear: true,
+    includeInEngine: true,
+    engineInclusionPolicy: EngineInclusionPolicy.NORMAL,
+    status: ShinyStatus.OWNED,
+    ...overrides,
+  };
+}

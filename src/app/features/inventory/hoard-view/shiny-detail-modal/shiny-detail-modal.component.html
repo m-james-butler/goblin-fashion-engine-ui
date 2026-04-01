@@ -1,0 +1,119 @@
+@if (shiny) {
+  <div class="image-modal-backdrop gfe-modal-backdrop" (click)="closeModal()">
+    <div class="image-modal gfe-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header gfe-modal-header">
+        <h2 class="modal-title gfe-modal-title">{{ modalTitle }}</h2>
+        <div class="modal-header-actions">
+          <button
+            type="button"
+            class="modal-close gfe-btn gfe-btn-primary"
+            [disabled]="isDeletingShiny"
+            (click)="requestEdit()"
+          >
+            Edit Shiny
+          </button>
+          <button
+            type="button"
+            class="delete-shiny-button gfe-btn gfe-btn-danger"
+            [disabled]="isDeletingShiny"
+            (click)="requestDelete()"
+          >
+            {{ isDeletingShiny ? 'Deleting...' : 'Delete Shiny' }}
+          </button>
+          <button
+            type="button"
+            class="modal-close gfe-btn gfe-btn-neutral"
+            aria-label="Close image preview"
+            (click)="closeModal()"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="modal-top-grid">
+          <div class="modal-image-block">
+            @if (selectedImagePath) {
+              <img [src]="selectedImagePath" [alt]="selectedImageAlt" />
+            } @else {
+              <div class="modal-image-placeholder">No Image Available</div>
+            }
+          </div>
+          <div class="modal-summary-block">
+            <h3>Summary</h3>
+            <div class="summary-row">
+              <span>Category</span>
+              <mat-chip-set aria-label="Summary category">
+                <mat-chip>{{ shiny.category | enumLabel }}</mat-chip>
+              </mat-chip-set>
+            </div>
+            <div class="summary-row">
+              <span>Subcategory</span>
+              <mat-chip-set aria-label="Summary subcategory">
+                <mat-chip>{{ shiny.subcategory || '-' }}</mat-chip>
+              </mat-chip-set>
+            </div>
+            <div class="summary-row">
+              <span>Primary Colour</span>
+              <span class="color-pill gfe-color-pill">
+                <span
+                  class="color-swatch gfe-color-swatch"
+                  [style.background]="colorPresentation.swatch"
+                ></span>
+                <span>{{ colorPresentation.displayLabel }}</span>
+              </span>
+            </div>
+            <div class="summary-row">
+              <span>Status</span>
+              <mat-chip-set aria-label="Summary status">
+                <mat-chip>{{ shiny.status | enumLabel }}</mat-chip>
+              </mat-chip-set>
+            </div>
+            <div class="summary-row">
+              <span>Flags</span>
+              <mat-chip-set aria-label="Summary flags">
+                <mat-chip
+                  [class.flag-on]="shiny.officeOk"
+                  [class.flag-off]="!shiny.officeOk"
+                >
+                  Office: {{ shiny.officeOk ? 'Yes' : 'No' }}
+                </mat-chip>
+                <mat-chip
+                  [class.flag-on]="shiny.publicWear"
+                  [class.flag-off]="!shiny.publicWear"
+                >
+                  Public: {{ shiny.publicWear ? 'Yes' : 'No' }}
+                </mat-chip>
+                <mat-chip
+                  [class.flag-on]="shiny.includeInEngine"
+                  [class.flag-off]="!shiny.includeInEngine"
+                >
+                  Engine: {{ shiny.includeInEngine ? 'Yes' : 'No' }}
+                </mat-chip>
+              </mat-chip-set>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-notes-block">
+          <h3>Notes</h3>
+          <p class="modal-notes">{{ shiny.notes || 'No notes available.' }}</p>
+        </div>
+
+        @if (deleteErrorMessage) {
+          <p class="gfe-inline-error">{{ deleteErrorMessage }}</p>
+        }
+
+        <div class="modal-details-block">
+          <h3>Details</h3>
+          <dl class="details-grid">
+            @for (entry of detailEntries; track trackByEntryLabel($index, entry)) {
+              <dt>{{ entry.label }}</dt>
+              <dd>{{ entry.value }}</dd>
+            }
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
+}

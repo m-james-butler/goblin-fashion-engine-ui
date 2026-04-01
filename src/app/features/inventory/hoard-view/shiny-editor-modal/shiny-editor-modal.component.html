@@ -1,0 +1,293 @@
+@if (isOpen) {
+  <div class="image-modal-backdrop gfe-modal-backdrop" (click)="closeModal()">
+    <div class="image-modal gfe-modal add-shiny-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header gfe-modal-header">
+        <h2 class="modal-title gfe-modal-title">{{ title }}</h2>
+        <button
+          type="button"
+          class="modal-close gfe-btn gfe-btn-accent"
+          [attr.aria-label]="closeAriaLabel"
+          (click)="closeModal()"
+        >
+          Close
+        </button>
+      </div>
+
+      <form class="add-shiny-form" #shinyFormRef="ngForm" (ngSubmit)="submit(shinyFormRef)">
+        <div class="add-shiny-grid">
+          <label class="form-field" [attr.for]="fieldId('name')">
+            <span>Name</span>
+            <input
+              [id]="fieldId('name')"
+              type="text"
+              name="name"
+              [(ngModel)]="form.name"
+              maxlength="100"
+            />
+          </label>
+
+          <label class="form-field" [attr.for]="fieldId('count')">
+            <span>Count *</span>
+            <input
+              [id]="fieldId('count')"
+              type="number"
+              min="1"
+              required
+              name="count"
+              [(ngModel)]="form.count"
+            />
+          </label>
+
+          <label class="form-field" [attr.for]="fieldId('category')">
+            <span>Category *</span>
+            <select
+              [id]="fieldId('category')"
+              required
+              name="category"
+              [(ngModel)]="form.category"
+            >
+              @for (value of categoryValues; track value) {
+                <option [value]="value">{{ value | enumLabel }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="form-field" [attr.for]="fieldId('subcategory')">
+            <span>Subcategory</span>
+            <input
+              [id]="fieldId('subcategory')"
+              type="text"
+              name="subcategory"
+              [(ngModel)]="form.subcategory"
+              maxlength="100"
+            />
+          </label>
+
+          <label class="form-field" [attr.for]="fieldId('layer')">
+            <span>Layer *</span>
+            <select
+              [id]="fieldId('layer')"
+              required
+              name="layer"
+              [(ngModel)]="form.layer"
+            >
+              @for (value of layerValues; track value) {
+                <option [value]="value">{{ value | enumLabel }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="form-field" [attr.for]="fieldId('formality')">
+            <span>Formality *</span>
+            <select
+              [id]="fieldId('formality')"
+              required
+              name="formality"
+              [(ngModel)]="form.formality"
+            >
+              @for (value of formalityValues; track value) {
+                <option [value]="value">{{ value | enumLabel }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="form-field" [attr.for]="fieldId('attention')">
+            <span>Attention *</span>
+            <select
+              [id]="fieldId('attention')"
+              required
+              name="attention"
+              [(ngModel)]="form.attention"
+            >
+              @for (value of attentionValues; track value) {
+                <option [value]="value">{{ value | enumLabel }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="form-field" [attr.for]="fieldId('status')">
+            <span>Status *</span>
+            <select
+              [id]="fieldId('status')"
+              required
+              name="status"
+              [(ngModel)]="form.status"
+            >
+              @for (value of statusValues; track value) {
+                <option [value]="value">{{ value | enumLabel }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="form-field" [attr.for]="fieldId('color-primary')">
+            <span>Primary Colour *</span>
+            <select
+              [id]="fieldId('color-primary')"
+              required
+              name="colorPrimary"
+              [(ngModel)]="form.colorPrimary"
+            >
+              @for (value of colorValues; track value) {
+                <option [value]="value">{{ value | enumLabel }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="form-field" [attr.for]="fieldId('color-secondary')">
+            <span>Secondary Colour</span>
+            <select
+              [id]="fieldId('color-secondary')"
+              name="colorSecondary"
+              [(ngModel)]="form.colorSecondary"
+            >
+              <option value="">None</option>
+              @for (value of colorValues; track value) {
+                <option [value]="value">{{ value | enumLabel }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="form-field" [attr.for]="fieldId('pattern')">
+            <span>Pattern</span>
+            <select [id]="fieldId('pattern')" name="pattern" [(ngModel)]="form.pattern">
+              <option value="">None</option>
+              @for (value of patternValues; track value) {
+                <option [value]="value">{{ value | enumLabel }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="form-field" [attr.for]="fieldId('warmth')">
+            <span>Warmth</span>
+            <input
+              [id]="fieldId('warmth')"
+              type="number"
+              min="0"
+              max="10"
+              name="warmth"
+              [(ngModel)]="form.warmth"
+            />
+          </label>
+
+          <label class="form-field" [attr.for]="fieldId('fabric')">
+            <span>Fabric</span>
+            <input
+              [id]="fieldId('fabric')"
+              type="text"
+              name="fabric"
+              [(ngModel)]="form.fabric"
+              maxlength="100"
+            />
+          </label>
+
+          <label class="form-field" [attr.for]="fieldId('fit')">
+            <span>Fit</span>
+            <input
+              [id]="fieldId('fit')"
+              type="text"
+              name="fit"
+              [(ngModel)]="form.fit"
+              maxlength="100"
+            />
+          </label>
+
+          <label class="form-field" [attr.for]="fieldId('engine-policy')">
+            <span>Engine Policy *</span>
+            <select
+              [id]="fieldId('engine-policy')"
+              required
+              name="engineInclusionPolicy"
+              [(ngModel)]="form.engineInclusionPolicy"
+            >
+              @for (value of engineInclusionPolicyValues; track value) {
+                <option [value]="value">{{ value | enumLabel }}</option>
+              }
+            </select>
+          </label>
+        </div>
+
+        <fieldset class="form-fieldset">
+          <legend>Contexts *</legend>
+          <div class="checkbox-grid">
+            @for (value of contextValues; track value) {
+              <label class="checkbox-option">
+                <input
+                  type="checkbox"
+                  [checked]="isContextSelected(value)"
+                  (change)="toggleContextSelection(value, $event)"
+                />
+                <span>{{ value | enumLabel }}</span>
+              </label>
+            }
+          </div>
+        </fieldset>
+
+        <fieldset class="form-fieldset">
+          <legend>Flags</legend>
+          <div class="checkbox-grid flags-grid">
+            <label class="checkbox-option">
+              <input
+                type="checkbox"
+                name="officeOk"
+                [(ngModel)]="form.officeOk"
+              />
+              <span>Office OK</span>
+            </label>
+            <label class="checkbox-option">
+              <input
+                type="checkbox"
+                name="publicWear"
+                [(ngModel)]="form.publicWear"
+              />
+              <span>Public Wear</span>
+            </label>
+            <label class="checkbox-option">
+              <input
+                type="checkbox"
+                name="includeInEngine"
+                [(ngModel)]="form.includeInEngine"
+              />
+              <span>Include In Engine</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <label class="form-field" [attr.for]="fieldId('notes')">
+          <span>Notes</span>
+          <textarea
+            [id]="fieldId('notes')"
+            rows="3"
+            name="notes"
+            [(ngModel)]="form.notes"
+            maxlength="800"
+          ></textarea>
+        </label>
+
+        <div class="image-upload-placeholder">
+          <h3>Image Upload</h3>
+          <p>Image upload is coming soon. This is a placeholder for now.</p>
+          <button type="button" class="placeholder-upload-button gfe-btn" disabled>
+            Upload Image (Soon)
+          </button>
+        </div>
+
+        @if (errorMessage) {
+          <p class="gfe-inline-error">{{ errorMessage }}</p>
+        }
+
+        <div class="form-actions">
+          <button type="button" class="cancel-button gfe-btn gfe-btn-neutral" (click)="closeModal()">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="save-button gfe-btn gfe-btn-accent"
+            [disabled]="shinyFormRef.invalid || isSubmitting"
+          >
+            {{ isSubmitting ? 'Saving...' : submitLabel }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

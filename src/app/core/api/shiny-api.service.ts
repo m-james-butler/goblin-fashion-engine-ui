@@ -6,6 +6,8 @@ import { ApiService } from './api.service';
 import { ShinyResponseDto } from './dto/shiny-response.dto';
 import { AppLoggerService } from '../logging/app-logger.service';
 import { ShinyCreateRequestDto } from './dto/shiny-create-request.dto';
+import { ShinyUpdateRequestDto } from './dto/shiny-update-request.dto';
+import { ShinyPatchRequestDto } from './dto/shiny-patch-request.dto';
 
 @Injectable({
   providedIn: 'root',
@@ -36,6 +38,32 @@ export class ShinyApiService {
       endpoint: sanitizeEndpoint(endpoint),
     });
     return this.http.post<ShinyResponseDto>(endpoint, payload);
+  }
+
+  updateShinyForGoblinAndHoard(
+    goblinId: string,
+    hoardId: string,
+    shinyId: string,
+    payload: ShinyUpdateRequestDto,
+  ): Observable<ShinyResponseDto> {
+    const endpoint = this.apiService.buildGoblinHoardShinyPath(goblinId, hoardId, shinyId);
+    this.logger.debug('shiny.api.update-shiny.requested', {
+      endpoint: sanitizeEndpoint(endpoint),
+    });
+    return this.http.put<ShinyResponseDto>(endpoint, payload);
+  }
+
+  patchShinyForGoblinAndHoard(
+    goblinId: string,
+    hoardId: string,
+    shinyId: string,
+    payload: ShinyPatchRequestDto,
+  ): Observable<ShinyResponseDto> {
+    const endpoint = this.apiService.buildGoblinHoardShinyPath(goblinId, hoardId, shinyId);
+    this.logger.debug('shiny.api.patch-shiny.requested', {
+      endpoint: sanitizeEndpoint(endpoint),
+    });
+    return this.http.patch<ShinyResponseDto>(endpoint, payload);
   }
 
   deleteShinyForGoblinAndHoard(

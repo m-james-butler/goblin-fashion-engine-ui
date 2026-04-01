@@ -1,0 +1,168 @@
+<div class="table-wrapper gfe-table-wrapper">
+  <table
+    mat-table
+    [dataSource]="shinies"
+    matSort
+    (matSortChange)="onSortChange($event)"
+    class="hoard-table"
+  >
+    <ng-container matColumnDef="image">
+      <th mat-header-cell *matHeaderCellDef>Image</th>
+      <td mat-cell *matCellDef="let shiny">
+        <div class="image-cell-content">
+          @if (shiny.imagePath) {
+            <button
+              type="button"
+              class="image-button"
+              (click)="openDetail(shiny)"
+            >
+              <img
+                class="shiny-image"
+                [src]="shiny.imagePath"
+                [alt]="shiny.name || shiny.id"
+              />
+            </button>
+          } @else {
+            <i class="fa-regular fa-image image-fallback-icon" aria-hidden="true"></i>
+          }
+        </div>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef>Name</th>
+      <td mat-cell *matCellDef="let shiny">
+        <button
+          type="button"
+          class="name-button"
+          (click)="openDetail(shiny)"
+        >
+          {{ shiny.name || shiny.id }}
+        </button>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="category">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header="category">
+        Category
+      </th>
+      <td mat-cell *matCellDef="let shiny">
+        <mat-chip-set aria-label="Category">
+          <mat-chip>{{ shiny.category | enumLabel }}</mat-chip>
+        </mat-chip-set>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="subcategory">
+      <th mat-header-cell *matHeaderCellDef>Subcategory</th>
+      <td mat-cell *matCellDef="let shiny">{{ shiny.subcategory }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="context">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header="context">
+        Context
+      </th>
+      <td mat-cell *matCellDef="let shiny">
+        <div class="context-cell">
+          @if (shiny.contexts.length > 0) {
+            <mat-chip-set aria-label="Primary context">
+              <mat-chip>{{ shiny.contexts[0] | enumLabel }}</mat-chip>
+            </mat-chip-set>
+            @if (shiny.contexts.length > 1) {
+              <span class="context-extra">+{{ shiny.contexts.length - 1 }}</span>
+            }
+          } @else {
+            -
+          }
+        </div>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="layer">
+      <th mat-header-cell *matHeaderCellDef>Layer</th>
+      <td mat-cell *matCellDef="let shiny">{{ shiny.layer }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="color">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header="color">
+        Color
+      </th>
+      <td mat-cell *matCellDef="let shiny">
+        @let colorPresentation = getColorPresentation(shiny.colorPrimary);
+        <span class="color-pill gfe-color-pill">
+          <span
+            class="color-swatch gfe-color-swatch"
+            [style.background]="colorPresentation.swatch"
+          ></span>
+          <span>{{ colorPresentation.displayLabel }}</span>
+        </span>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="pattern">
+      <th mat-header-cell *matHeaderCellDef>Pattern</th>
+      <td mat-cell *matCellDef="let shiny">{{ shiny.pattern || '-' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="fabric">
+      <th mat-header-cell *matHeaderCellDef>Fabric</th>
+      <td mat-cell *matCellDef="let shiny">{{ shiny.fabric || '-' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header="status">
+        Status
+      </th>
+      <td mat-cell *matCellDef="let shiny">
+        <mat-chip-set aria-label="Status">
+          <mat-chip>{{ shiny.status | enumLabel }}</mat-chip>
+        </mat-chip-set>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="notes">
+      <th mat-header-cell *matHeaderCellDef>Notes</th>
+      <td mat-cell *matCellDef="let shiny">
+        <span
+          class="notes-cell"
+          [matTooltip]="shiny.notes || ''"
+          [matTooltipDisabled]="!shiny.notes"
+        >
+          {{ shiny.notes || '-' }}
+        </span>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef>Actions</th>
+      <td mat-cell *matCellDef="let shiny">
+        <div class="row-actions">
+          <button
+            type="button"
+            class="row-action-trigger"
+            [attr.aria-label]="'Open actions for ' + (shiny.name || shiny.id)"
+            matTooltip="Actions"
+            [matMenuTriggerFor]="rowActionsMenu"
+            [matMenuTriggerData]="{ shiny: shiny }"
+          >
+            <i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i>
+          </button>
+        </div>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+  </table>
+</div>
+
+<mat-menu #rowActionsMenu="matMenu">
+  <ng-template matMenuContent let-shiny="shiny">
+    <button type="button" mat-menu-item (click)="editShiny(shiny)">
+      Edit
+    </button>
+    <button type="button" mat-menu-item class="menu-delete-action" (click)="deleteShiny(shiny)">
+      Delete
+    </button>
+  </ng-template>
+</mat-menu>

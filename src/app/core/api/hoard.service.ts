@@ -9,6 +9,8 @@ import { AppLoggerService } from '../logging/app-logger.service';
 import { ShinyApiService } from './shiny-api.service';
 import { ShinyAdapter } from './adapters/shiny.adapter';
 import { ShinyCreateRequestDto } from './dto/shiny-create-request.dto';
+import { ShinyUpdateRequestDto } from './dto/shiny-update-request.dto';
+import { ShinyPatchRequestDto } from './dto/shiny-patch-request.dto';
 
 type HoardWithShinies = Hoard & { shinies: Shiny[] };
 
@@ -93,6 +95,60 @@ export class HoardService {
             map((dto) => {
               const shiny = this.shinyAdapter.fromDto(dto);
               this.logger.info('hoard.shiny.create.succeeded', {
+                hoardId: goblin.defaultHoardId,
+                shinyId: shiny.id,
+              });
+              return shiny;
+            }),
+          );
+      }),
+    );
+  }
+
+  updateShinyForCurrentHoard(
+    shinyId: string,
+    payload: ShinyUpdateRequestDto,
+  ): Observable<Shiny> {
+    return this.goblinService.getCurrentGoblin().pipe(
+      switchMap((goblin) => {
+        if (!goblin) {
+          this.logger.warn('hoard.shiny.update.skipped.no-authenticated-user', { shinyId });
+          return throwError(() => new Error('No authenticated goblin was found.'));
+        }
+
+        return this.shinyApiService
+          .updateShinyForGoblinAndHoard(goblin.id, goblin.defaultHoardId, shinyId, payload)
+          .pipe(
+            map((dto) => {
+              const shiny = this.shinyAdapter.fromDto(dto);
+              this.logger.info('hoard.shiny.update.succeeded', {
+                hoardId: goblin.defaultHoardId,
+                shinyId: shiny.id,
+              });
+              return shiny;
+            }),
+          );
+      }),
+    );
+  }
+
+  patchShinyForCurrentHoard(
+    shinyId: string,
+    payload: ShinyPatchRequestDto,
+  ): Observable<Shiny> {
+    return this.goblinService.getCurrentGoblin().pipe(
+      switchMap((goblin) => {
+        if (!goblin) {
+          this.logger.warn('hoard.shiny.patch.skipped.no-authenticated-user', { shinyId });
+          return throwError(() => new Error('No authenticated goblin was found.'));
+        }
+
+        return this.shinyApiService
+          .patchShinyForGoblinAndHoard(goblin.id, goblin.defaultHoardId, shinyId, payload)
+          .pipe(
+            map((dto) => {
+              const shiny = this.shinyAdapter.fromDto(dto);
+              this.logger.info('hoard.shiny.patch.succeeded', {
                 hoardId: goblin.defaultHoardId,
                 shinyId: shiny.id,
               });

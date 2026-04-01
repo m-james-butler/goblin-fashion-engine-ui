@@ -16,6 +16,8 @@ import {
   ShinyStatus,
 } from '../../../core/models/enums';
 import { ShinyCreateRequestDto } from '../../../core/api/dto/shiny-create-request.dto';
+import { ShinyUpdateRequestDto } from '../../../core/api/dto/shiny-update-request.dto';
+import { ShinyPatchRequestDto } from '../../../core/api/dto/shiny-patch-request.dto';
 
 describe('HoardViewComponent', () => {
   let component: HoardViewComponent;
@@ -47,6 +49,8 @@ describe('HoardViewComponent', () => {
     hoardServiceSpy = jasmine.createSpyObj<HoardService>('HoardService', [
       'getShiniesForCurrentHoard',
       'createShinyForCurrentHoard',
+      'updateShinyForCurrentHoard',
+      'patchShinyForCurrentHoard',
       'deleteShinyForCurrentHoard',
     ]);
     hoardServiceSpy.createShinyForCurrentHoard.and.returnValue(
@@ -58,6 +62,22 @@ describe('HoardViewComponent', () => {
       ),
     );
     hoardServiceSpy.deleteShinyForCurrentHoard.and.returnValue(of(void 0));
+    hoardServiceSpy.updateShinyForCurrentHoard.and.returnValue(
+      of(
+        createShiny({
+          id: 'shiny-001',
+          name: 'Updated Shiny',
+        }),
+      ),
+    );
+    hoardServiceSpy.patchShinyForCurrentHoard.and.returnValue(
+      of(
+        createShiny({
+          id: 'shiny-001',
+          status: ShinyStatus.DONATE,
+        }),
+      ),
+    );
 
     await TestBed.configureTestingModule({
       imports: [HoardViewComponent],
@@ -141,6 +161,28 @@ describe('HoardViewComponent', () => {
     expect(rows.length).toBe(1);
     expect(host.textContent).toContain('office item');
     expect(host.textContent).not.toContain('casual item');
+  });
+
+  it('filters rows by search query', () => {
+    hoardServiceSpy.getShiniesForCurrentHoard.and.returnValue(
+      of([
+        createShiny({ id: 's1', name: 'Emerald Cloak', notes: 'green layer' }),
+        createShiny({ id: 's2', name: 'Iron Boots', notes: 'heavy step' }),
+      ]),
+    );
+
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const searchInput = host.querySelector('#shiny-search-filter') as HTMLInputElement;
+    searchInput.value = 'emerald';
+    searchInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    const rows = host.querySelectorAll('tr.mat-mdc-row');
+    expect(rows.length).toBe(1);
+    expect(host.textContent).toContain('Emerald Cloak');
+    expect(host.textContent).not.toContain('Iron Boots');
   });
 
   it('sorts rows by color', () => {
@@ -287,5 +329,95 @@ describe('HoardViewComponent', () => {
     expect(hoardServiceSpy.deleteShinyForCurrentHoard).toHaveBeenCalledOnceWith('delete-me');
     expect(component.shinies.find((shiny) => shiny.id === 'delete-me')).toBeUndefined();
     expect(component.selectedShiny).toBeNull();
+  });
+
+  it('updates a shiny from edit modal', () => {
+    const shinyToEdit = createShiny({ id: 'edit-me', name: 'Before Edit' });
+    hoardServiceSpy.getShiniesForCurrentHoard.and.returnValue(of([shinyToEdit]));
+    hoardServiceSpy.updateShinyForCurrentHoard.and.returnValue(
+      of(
+        createShiny({
+          id: 'edit-me',
+          name: 'After Edit',
+          contexts: [Context.OFFICE],
+        }),
+      ),
+    );
+
+    fixture.detectChanges();
+    component.openEditShinyModal(shinyToEdit);
+    component.editShinyForm = {
+      ...component.editShinyForm,
+      name: 'After Edit',
+      contexts: [Context.OFFICE],
+      category: ShinyCategory.TOP,
+      layer: Layer.BASE,
+      formality: Formality.CASUAL,
+      attention: Attention.LOW,
+      colorPrimary: Color.BLACK,
+      engineInclusionPolicy: EngineInclusionPolicy.NORMAL,
+      status: ShinyStatus.OWNED,
+    };
+
+    component.submitEditedShiny();
+
+    expect(hoardServiceSpy.updateShinyForCurrentHoard).toHaveBeenCalled();
+    const [shinyId, payload] = hoardServiceSpy.updateShinyForCurrentHoard.calls.mostRecent()
+      .args as [string, ShinyUpdateRequestDto];
+    expect(shinyId).toBe('edit-me');
+    expect(payload.id).toBe('edit-me');
+    expect(payload.name).toBe('After Edit');
+    expect(component.shinies[0].name).toBe('After Edit');
+    expect(component.isEditModalOpen).toBeFalse();
+  });
+
+  it('uses patch endpoint when edit changes patch-only fields', () => {
+    const shinyToEdit = createShiny({
+      id: 'patch-me',
+      name: 'Patchable',
+      notes: 'before',
+      includeInEngine: true,
+      attention: Attention.LOW,
+      status: ShinyStatus.OWNED,
+    });
+    hoardServiceSpy.getShiniesForCurrentHoard.and.returnValue(of([shinyToEdit]));
+    hoardServiceSpy.patchShinyForCurrentHoard.and.returnValue(
+      of(
+        createShiny({
+          id: 'patch-me',
+          name: 'Patchable',
+          notes: 'after',
+          includeInEngine: false,
+          attention: Attention.MEDIUM,
+          status: ShinyStatus.DONATE,
+        }),
+      ),
+    );
+
+    fixture.detectChanges();
+    component.openEditShinyModal(shinyToEdit);
+    component.editShinyForm = {
+      ...component.editShinyForm,
+      notes: 'after',
+      includeInEngine: false,
+      attention: Attention.MEDIUM,
+      status: ShinyStatus.DONATE,
+    };
+
+    component.submitEditedShiny();
+
+    expect(hoardServiceSpy.patchShinyForCurrentHoard).toHaveBeenCalled();
+    const [shinyId, payload] = hoardServiceSpy.patchShinyForCurrentHoard.calls.mostRecent()
+      .args as [string, ShinyPatchRequestDto];
+    expect(shinyId).toBe('patch-me');
+    expect(payload).toEqual(
+      jasmine.objectContaining({
+        notes: 'after',
+        includeInEngine: false,
+        attentionLevel: Attention.MEDIUM,
+        status: ShinyStatus.DONATE,
+      }),
+    );
+    expect(hoardServiceSpy.updateShinyForCurrentHoard).not.toHaveBeenCalled();
   });
 });

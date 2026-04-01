@@ -8,12 +8,9 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSortModule, Sort } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatChipsModule } from '@angular/material/chips';
+import { Sort } from '@angular/material/sort';
+import { Observable } from 'rxjs';
 
 import { HoardService } from '../../../core/api/hoard.service';
 import { Shiny } from '../../../core/models/shiny.model';
@@ -30,55 +27,40 @@ import {
   ShinyStatus,
   enumValues,
 } from '../../../core/models/enums';
-import { EnumLabelPipe } from '../../../core/pipes/enum-label.pipe';
 import { formatEnumLabel } from '../../../core/utils/enum-label.util';
 import { ShinyCreateRequestDto } from '../../../core/api/dto/shiny-create-request.dto';
+import { ShinyUpdateRequestDto } from '../../../core/api/dto/shiny-update-request.dto';
+import { ShinyPatchRequestDto } from '../../../core/api/dto/shiny-patch-request.dto';
+import { ShinyEditorModalComponent } from './shiny-editor-modal/shiny-editor-modal.component';
+import { ShinyFormModel } from './shiny-form.model';
+import { ShinyDetailModalComponent } from './shiny-detail-modal/shiny-detail-modal.component';
+import { HoardFiltersComponent } from './hoard-filters/hoard-filters.component';
+import { HoardInventoryGridComponent } from './hoard-inventory-grid/hoard-inventory-grid.component';
+import { FilterKey, HoardFilters } from './hoard-filters.model';
+import {
+  ColorPresentation,
+  getShinyColorPresentation,
+} from './shiny-color-presentation.util';
+import { HoardViewStore } from './hoard-view.store';
 
-type FilterKey = 'category' | 'context' | 'status' | 'color';
-type SortKey = '' | 'category' | 'context' | 'status' | 'color';
 type DetailEntry = { label: string; value: string };
-type ColorPresentation = {
-  swatch: string;
-  displayLabel: string;
-};
-
-type CreateShinyFormModel = {
-  name: string;
-  notes: string;
-  count: number;
-  category: ShinyCategory;
-  subcategory: string;
-  layer: Layer;
-  contexts: Context[];
-  formality: Formality;
-  attention: Attention;
-  colorPrimary: Color;
-  colorSecondary: '' | Color;
-  pattern: '' | Pattern;
-  fabric: string;
-  fit: string;
-  warmth: string;
-  officeOk: boolean;
-  publicWear: boolean;
-  includeInEngine: boolean;
-  engineInclusionPolicy: EngineInclusionPolicy;
-  imagePathPlaceholder: string;
-  status: ShinyStatus;
-};
+type EditSubmissionMode =
+  | { kind: 'none' }
+  | { kind: 'patch'; payload: ShinyPatchRequestDto }
+  | { kind: 'put'; payload: ShinyUpdateRequestDto };
 
 @Component({
   selector: 'app-hoard-view',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [HoardViewStore],
   imports: [
     CommonModule,
-    FormsModule,
     MatProgressSpinnerModule,
-    MatSortModule,
-    MatTableModule,
-    MatTooltipModule,
-    MatChipsModule,
-    EnumLabelPipe,
+    ShinyEditorModalComponent,
+    ShinyDetailModalComponent,
+    HoardFiltersComponent,
+    HoardInventoryGridComponent,
   ],
   templateUrl: './hoard-view.component.html',
   styleUrl: './hoard-view.component.scss',
@@ -88,41 +70,24 @@ export class HoardViewComponent implements OnInit {
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly logger = inject(AppLoggerService);
+  private readonly viewStore = inject(HoardViewStore);
 
-  shinies: Shiny[] = [];
-  filteredShinies: Shiny[] = [];
   isLoading = true;
   errorMessage: string | null = null;
   addErrorMessage: string | null = null;
+  editErrorMessage: string | null = null;
   deleteErrorMessage: string | null = null;
   selectedImagePath: string | null = null;
   selectedImageAlt = '';
   selectedShiny: Shiny | null = null;
   isDeletingShiny = false;
   isAddModalOpen = false;
+  isEditModalOpen = false;
   isSubmittingNewShiny = false;
-  newShinyForm: CreateShinyFormModel = this.createDefaultShinyForm();
-  sortState: Sort = { active: '', direction: '' };
-  filters: Record<FilterKey, string> = {
-    category: '',
-    context: '',
-    status: '',
-    color: '',
-  };
-  categoryOptions: string[] = [];
-  contextOptions: string[] = [];
-  statusOptions: string[] = [];
-  colorOptions: string[] = [];
-  readonly displayedColumns: string[] = [
-    'image',
-    'name',
-    'category',
-    'subcategory',
-    'context',
-    'color',
-    'status',
-    'notes',
-  ];
+  isSubmittingEditShiny = false;
+  newShinyForm: ShinyFormModel = this.createDefaultShinyForm();
+  editShinyForm: ShinyFormModel = this.createDefaultShinyForm();
+  editingShinyId: string | null = null;
   readonly categoryValues = enumValues(ShinyCategory) as ShinyCategory[];
   readonly layerValues = enumValues(Layer) as Layer[];
   readonly contextValues = enumValues(Context) as Context[];
@@ -134,6 +99,42 @@ export class HoardViewComponent implements OnInit {
     EngineInclusionPolicy,
   ) as EngineInclusionPolicy[];
   readonly statusValues = enumValues(ShinyStatus) as ShinyStatus[];
+
+  get shinies(): Shiny[] {
+    return this.viewStore.shinies();
+  }
+
+  get filteredShinies(): Shiny[] {
+    return this.viewStore.filteredShinies();
+  }
+
+  get sortState(): Sort {
+    return this.viewStore.sortState();
+  }
+
+  get filters(): HoardFilters {
+    return this.viewStore.filters();
+  }
+
+  get searchQuery(): string {
+    return this.viewStore.searchQuery();
+  }
+
+  get categoryOptions(): string[] {
+    return this.viewStore.categoryOptions();
+  }
+
+  get contextOptions(): string[] {
+    return this.viewStore.contextOptions();
+  }
+
+  get statusOptions(): string[] {
+    return this.viewStore.statusOptions();
+  }
+
+  get colorOptions(): string[] {
+    return this.viewStore.colorOptions();
+  }
 
   ngOnInit(): void {
     this.loadShinies();
@@ -147,10 +148,7 @@ export class HoardViewComponent implements OnInit {
         next: (shinies) => {
           this.logger.info('hoard.view.load.succeeded', { shinyCount: shinies.length });
           this.errorMessage = null;
-          this.shinies = shinies;
-          this.resetFilters();
-          this.buildFilterOptions();
-          this.applyFilters();
+          this.viewStore.replaceAllShinies(shinies);
           this.isLoading = false;
           this.changeDetectorRef.markForCheck();
         },
@@ -163,15 +161,16 @@ export class HoardViewComponent implements OnInit {
       });
   }
 
-  applyFilterSelection(filter: FilterKey, event: Event): void {
-    const target = event.target as HTMLSelectElement;
-    this.filters[filter] = target.value;
-    this.applyFilters();
+  applyFilterSelection(filter: FilterKey, value: string): void {
+    this.viewStore.updateFilter(filter, value);
+  }
+
+  updateSearchQuery(value: string): void {
+    this.viewStore.updateSearchQuery(value);
   }
 
   applySortOrder(sort: Sort): void {
-    this.sortState = sort;
-    this.applyFilters();
+    this.viewStore.updateSort(sort);
   }
 
   openDetailModal(shiny: Shiny): void {
@@ -200,22 +199,39 @@ export class HoardViewComponent implements OnInit {
     this.addErrorMessage = null;
   }
 
-  isContextSelected(context: Context): boolean {
-    return this.newShinyForm.contexts.includes(context);
+  openEditShinyModal(shiny: Shiny): void {
+    this.editingShinyId = shiny.id;
+    this.editShinyForm = this.createShinyFormFromModel(shiny);
+    this.editErrorMessage = null;
+    this.isEditModalOpen = true;
   }
 
-  toggleContextSelection(context: Context, event: Event): void {
-    const target = event.target as HTMLInputElement;
-    if (target.checked) {
-      if (!this.newShinyForm.contexts.includes(context)) {
-        this.newShinyForm.contexts = [...this.newShinyForm.contexts, context];
-      }
+  closeEditShinyModal(): void {
+    this.isEditModalOpen = false;
+    this.isSubmittingEditShiny = false;
+    this.editErrorMessage = null;
+    this.editingShinyId = null;
+  }
+
+  openEditFromDetailModal(): void {
+    if (!this.selectedShiny) {
       return;
     }
 
-    this.newShinyForm.contexts = this.newShinyForm.contexts.filter(
-      (selected) => selected !== context,
-    );
+    const shinyToEdit = this.selectedShiny;
+    this.closeImageModal();
+    this.openEditShinyModal(shinyToEdit);
+  }
+
+  editShinyFromActions(shiny: Shiny): void {
+    this.openEditShinyModal(shiny);
+  }
+
+  deleteShinyFromActions(shiny: Shiny): void {
+    this.deleteShiny(shiny, {
+      closeDetailOnSuccess: false,
+      reportErrorsInDetailModal: false,
+    });
   }
 
   submitNewShiny(): void {
@@ -231,39 +247,17 @@ export class HoardViewComponent implements OnInit {
     this.addErrorMessage = null;
     this.isSubmittingNewShiny = true;
 
-    const payload: ShinyCreateRequestDto = {
-      id: this.createNewShinyId(),
-      name: this.toUndefinedIfBlank(this.newShinyForm.name),
-      notes: this.toUndefinedIfBlank(this.newShinyForm.notes),
-      count: this.newShinyForm.count,
-      category: this.newShinyForm.category,
-      subcategory: this.toUndefinedIfBlank(this.newShinyForm.subcategory),
-      layer: this.newShinyForm.layer,
-      contexts: this.newShinyForm.contexts,
-      formality: this.newShinyForm.formality,
-      attention: this.newShinyForm.attention,
-      colorPrimary: this.newShinyForm.colorPrimary,
-      colorSecondary: this.toOptionalEnumValue(this.newShinyForm.colorSecondary),
-      pattern: this.toOptionalEnumValue(this.newShinyForm.pattern),
-      fabric: this.toUndefinedIfBlank(this.newShinyForm.fabric),
-      fit: this.toUndefinedIfBlank(this.newShinyForm.fit),
-      warmth: this.toOptionalNumber(this.newShinyForm.warmth),
-      officeOk: this.newShinyForm.officeOk,
-      publicWear: this.newShinyForm.publicWear,
-      includeInEngine: this.newShinyForm.includeInEngine,
-      engineInclusionPolicy: this.newShinyForm.engineInclusionPolicy,
-      imagePath: this.toUndefinedIfBlank(this.newShinyForm.imagePathPlaceholder),
-      status: this.newShinyForm.status,
-    };
+    const payload: ShinyCreateRequestDto = this.buildShinyPayload(
+      this.newShinyForm,
+      this.createNewShinyId(),
+    );
 
     this.hoardService
       .createShinyForCurrentHoard(payload)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (createdShiny) => {
-          this.shinies = [createdShiny, ...this.shinies];
-          this.buildFilterOptions();
-          this.applyFilters();
+          this.viewStore.prependShiny(createdShiny);
           this.closeAddShinyModal();
           this.changeDetectorRef.markForCheck();
         },
@@ -276,12 +270,74 @@ export class HoardViewComponent implements OnInit {
       });
   }
 
+  submitEditedShiny(): void {
+    if (this.isSubmittingEditShiny || !this.editingShinyId) {
+      return;
+    }
+
+    if (this.editShinyForm.contexts.length === 0) {
+      this.editErrorMessage = 'Select at least one context.';
+      return;
+    }
+
+    const existingShiny = this.viewStore.getShinyById(this.editingShinyId);
+    if (!existingShiny) {
+      this.editErrorMessage = 'Unable to find shiny to edit.';
+      this.logger.error('hoard.shiny.update.skipped.missing-current-shiny', {
+        shinyId: this.editingShinyId,
+      });
+      return;
+    }
+
+    const editSubmission = this.buildEditSubmission(
+      existingShiny,
+      this.editShinyForm,
+      this.editingShinyId,
+    );
+    if (editSubmission.kind === 'none') {
+      this.closeEditShinyModal();
+      this.changeDetectorRef.markForCheck();
+      return;
+    }
+
+    this.editErrorMessage = null;
+    this.isSubmittingEditShiny = true;
+
+    const saveRequest$ = this.resolveEditRequest(this.editingShinyId, editSubmission);
+    saveRequest$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (updatedShiny) => {
+        this.viewStore.replaceShiny(updatedShiny);
+        this.closeEditShinyModal();
+        this.changeDetectorRef.markForCheck();
+      },
+      error: (error) => {
+        this.logger.error('hoard.shiny.update.failed', {
+          error,
+          shinyId: this.editingShinyId,
+          mode: editSubmission.kind,
+        });
+        this.editErrorMessage = 'Unable to save shiny changes right now. Please try again.';
+        this.isSubmittingEditShiny = false;
+        this.changeDetectorRef.markForCheck();
+      },
+    });
+  }
+
   deleteSelectedShiny(): void {
     if (!this.selectedShiny || this.isDeletingShiny) {
       return;
     }
 
-    const shinyToDelete = this.selectedShiny;
+    this.deleteShiny(this.selectedShiny, {
+      closeDetailOnSuccess: true,
+      reportErrorsInDetailModal: true,
+    });
+  }
+
+  private deleteShiny(
+    shinyToDelete: Shiny,
+    options: { closeDetailOnSuccess: boolean; reportErrorsInDetailModal: boolean },
+  ): void {
     const shinyLabel = shinyToDelete.name || shinyToDelete.id;
     const shouldDelete = globalThis.confirm(
       `Delete "${shinyLabel}"? This action cannot be undone.`,
@@ -299,15 +355,17 @@ export class HoardViewComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this.closeImageModal();
-          this.shinies = this.shinies.filter((shiny) => shiny.id !== shinyToDelete.id);
-          this.buildFilterOptions();
-          this.applyFilters();
+          if (options.closeDetailOnSuccess) {
+            this.closeImageModal();
+          }
+          this.viewStore.removeShiny(shinyToDelete.id);
           this.changeDetectorRef.markForCheck();
         },
         error: (error) => {
           this.logger.error('hoard.shiny.delete.failed', { error, shinyId: shinyToDelete.id });
-          this.deleteErrorMessage = 'Unable to delete shiny right now. Please try again.';
+          if (options.reportErrorsInDetailModal) {
+            this.deleteErrorMessage = 'Unable to delete shiny right now. Please try again.';
+          }
           this.isDeletingShiny = false;
           this.changeDetectorRef.markForCheck();
         },
@@ -361,70 +419,114 @@ export class HoardViewComponent implements OnInit {
     ];
   }
 
-  private applyFilters(): void {
-    const filtered = this.shinies.filter((shiny) => {
-      const matchesCategory =
-        !this.filters.category || shiny.category === this.filters.category;
-      const matchesContext =
-        !this.filters.context ||
-        shiny.contexts.some((context) => context === this.filters.context);
-      const matchesStatus =
-        !this.filters.status || shiny.status === this.filters.status;
-      const matchesColor =
-        !this.filters.color || shiny.colorPrimary === this.filters.color;
-
-      return (
-        matchesCategory && matchesContext && matchesStatus && matchesColor
-      );
-    });
-
-    this.filteredShinies = this.sortShinies(filtered);
-  }
-
-  private sortShinies(shinies: Shiny[]): Shiny[] {
-    const active = this.sortState.active as SortKey;
-    const direction = this.sortState.direction;
-
-    if (!active || !direction) {
-      return shinies;
+  private resolveEditRequest(
+    shinyId: string,
+    editSubmission: Exclude<EditSubmissionMode, { kind: 'none' }>,
+  ): Observable<Shiny> {
+    if (editSubmission.kind === 'patch') {
+      return this.hoardService.patchShinyForCurrentHoard(shinyId, editSubmission.payload);
     }
 
-    const accessor: Record<Exclude<SortKey, ''>, (shiny: Shiny) => string> = {
-      category: (shiny) => shiny.category.toString(),
-      context: (shiny) => this.getPrimaryContext(shiny),
-      status: (shiny) => shiny.status.toString(),
-      color: (shiny) => shiny.colorPrimary.toString(),
+    return this.hoardService.updateShinyForCurrentHoard(shinyId, editSubmission.payload);
+  }
+
+  private buildEditSubmission(
+    existingShiny: Shiny,
+    form: ShinyFormModel,
+    shinyId: string,
+  ): EditSubmissionMode {
+    const patchPayload = this.buildPatchPayloadWhenApplicable(existingShiny, form);
+    if (patchPayload === null) {
+      return {
+        kind: 'put',
+        payload: this.buildShinyPayload(form, shinyId),
+      };
+    }
+
+    if (Object.keys(patchPayload).length === 0) {
+      return { kind: 'none' };
+    }
+
+    return {
+      kind: 'patch',
+      payload: patchPayload,
     };
-
-    const selectValue = accessor[active];
-    const sorted = [...shinies].sort((a, b) =>
-      selectValue(a).localeCompare(selectValue(b), undefined, {
-        sensitivity: 'base',
-      })
-    );
-
-    return direction === 'asc' ? sorted : sorted.reverse();
   }
 
-  private buildFilterOptions(): void {
-    this.categoryOptions = this.getUniqueValues((shiny) =>
-      shiny.category.toString(),
-    );
-    this.contextOptions = this.getUniqueValues((shiny) =>
-      this.getPrimaryContext(shiny),
-    );
-    this.statusOptions = this.getUniqueValues((shiny) => shiny.status.toString());
-    this.colorOptions = this.getUniqueValues((shiny) =>
-      shiny.colorPrimary.toString(),
-    );
+  private buildPatchPayloadWhenApplicable(
+    existingShiny: Shiny,
+    form: ShinyFormModel,
+  ): ShinyPatchRequestDto | null {
+    const nonPatchFieldsChanged =
+      this.normalizeText(existingShiny.name) !== this.normalizeText(form.name) ||
+      existingShiny.count !== form.count ||
+      existingShiny.category !== form.category ||
+      this.normalizeText(existingShiny.subcategory) !== this.normalizeText(form.subcategory) ||
+      existingShiny.layer !== form.layer ||
+      !this.areStringArraysEqual(existingShiny.contexts, form.contexts) ||
+      existingShiny.formality !== form.formality ||
+      existingShiny.colorPrimary !== form.colorPrimary ||
+      this.normalizeEnumValue(existingShiny.colorSecondary) !== form.colorSecondary ||
+      this.normalizeEnumValue(existingShiny.pattern) !== form.pattern ||
+      this.normalizeText(existingShiny.fabric) !== this.normalizeText(form.fabric) ||
+      this.normalizeText(existingShiny.fit) !== this.normalizeText(form.fit) ||
+      this.normalizeNumber(existingShiny.warmth) !== this.toOptionalNumber(form.warmth) ||
+      existingShiny.officeOk !== form.officeOk ||
+      existingShiny.publicWear !== form.publicWear ||
+      existingShiny.engineInclusionPolicy !== form.engineInclusionPolicy;
+
+    if (nonPatchFieldsChanged) {
+      return null;
+    }
+
+    const patchPayload: ShinyPatchRequestDto = {};
+    if (existingShiny.status !== form.status) {
+      patchPayload.status = form.status;
+    }
+    if (existingShiny.attention !== form.attention) {
+      patchPayload.attentionLevel = form.attention;
+    }
+    if (existingShiny.includeInEngine !== form.includeInEngine) {
+      patchPayload.includeInEngine = form.includeInEngine;
+    }
+
+    const normalizedImagePath = form.imagePathPlaceholder.trim();
+    const existingImagePath = existingShiny.imagePath ?? '';
+    if (normalizedImagePath !== existingImagePath) {
+      patchPayload.imagePath = normalizedImagePath;
+    }
+
+    const normalizedNotes = form.notes.trim();
+    const existingNotes = existingShiny.notes ?? '';
+    if (normalizedNotes !== existingNotes) {
+      patchPayload.notes = normalizedNotes;
+    }
+
+    return patchPayload;
   }
 
-  private getUniqueValues(selector: (shiny: Shiny) => string): string[] {
-    return [...new Set(this.shinies.map(selector).filter(Boolean))].sort();
+  private areStringArraysEqual(left: readonly string[], right: readonly string[]): boolean {
+    if (left.length !== right.length) {
+      return false;
+    }
+
+    return left.every((value, index) => value === right[index]);
   }
 
-  private getPrimaryContext(shiny: Shiny): string {
-    return shiny.contexts[0] ?? '';
+  private normalizeText(value: string | undefined): string {
+    return (value ?? '').trim();
+  }
+
+  private normalizeEnumValue<T extends string>(value: T | undefined): '' | T {
+    return value ?? '';
+  }
+
+  private normalizeNumber(value: number | undefined): number | undefined {
+    if (value === null || value === undefined) {
+      return undefined;
+    }
+
+    return Number.isFinite(value) ? value : undefined;
   }
 
   private toDisplayValue(value: unknown): string {
@@ -461,7 +563,60 @@ export class HoardViewComponent implements OnInit {
     return value || undefined;
   }
 
-  private createDefaultShinyForm(): CreateShinyFormModel {
+  private buildShinyPayload(form: ShinyFormModel, id: string): ShinyCreateRequestDto {
+    return {
+      id,
+      name: this.toUndefinedIfBlank(form.name),
+      notes: this.toUndefinedIfBlank(form.notes),
+      count: form.count,
+      category: form.category,
+      subcategory: this.toUndefinedIfBlank(form.subcategory),
+      layer: form.layer,
+      contexts: form.contexts,
+      formality: form.formality,
+      attention: form.attention,
+      colorPrimary: form.colorPrimary,
+      colorSecondary: this.toOptionalEnumValue(form.colorSecondary),
+      pattern: this.toOptionalEnumValue(form.pattern),
+      fabric: this.toUndefinedIfBlank(form.fabric),
+      fit: this.toUndefinedIfBlank(form.fit),
+      warmth: this.toOptionalNumber(form.warmth),
+      officeOk: form.officeOk,
+      publicWear: form.publicWear,
+      includeInEngine: form.includeInEngine,
+      engineInclusionPolicy: form.engineInclusionPolicy,
+      imagePath: this.toUndefinedIfBlank(form.imagePathPlaceholder),
+      status: form.status,
+    };
+  }
+
+  private createShinyFormFromModel(shiny: Shiny): ShinyFormModel {
+    return {
+      name: shiny.name ?? '',
+      notes: shiny.notes ?? '',
+      count: shiny.count,
+      category: shiny.category,
+      subcategory: shiny.subcategory ?? '',
+      layer: shiny.layer,
+      contexts: [...shiny.contexts],
+      formality: shiny.formality,
+      attention: shiny.attention,
+      colorPrimary: shiny.colorPrimary,
+      colorSecondary: shiny.colorSecondary ?? '',
+      pattern: shiny.pattern ?? '',
+      fabric: shiny.fabric ?? '',
+      fit: shiny.fit ?? '',
+      warmth: shiny.warmth?.toString() ?? '',
+      officeOk: shiny.officeOk,
+      publicWear: shiny.publicWear,
+      includeInEngine: shiny.includeInEngine,
+      engineInclusionPolicy: shiny.engineInclusionPolicy,
+      imagePathPlaceholder: shiny.imagePath ?? '',
+      status: shiny.status,
+    };
+  }
+
+  private createDefaultShinyForm(): ShinyFormModel {
     return {
       name: '',
       notes: '',
@@ -496,58 +651,7 @@ export class HoardViewComponent implements OnInit {
     return `shiny-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
   }
 
-  private resetFilters(): void {
-    this.filters = {
-      category: '',
-      context: '',
-      status: '',
-      color: '',
-    };
-  }
-
   getColorPresentation(color: Color | undefined): ColorPresentation {
-    if (!color) {
-      return {
-        swatch: '#7f7f7f',
-        displayLabel: 'Unknown',
-      };
-    }
-
-    const baseColor = COLOR_SWATCH_BY_ENUM[color] ?? '#7f7f7f';
-
-    return {
-      swatch: baseColor,
-      displayLabel: formatEnumLabel(color),
-    };
+    return getShinyColorPresentation(color);
   }
 }
-
-const COLOR_SWATCH_BY_ENUM: Record<Color, string> = {
-  [Color.BLACK]: '#111111',
-  [Color.CHARCOAL]: '#36454f',
-  [Color.GREY]: '#808080',
-  [Color.WHITE]: '#f7f7f7',
-  [Color.CREAM]: '#fff7d1',
-  [Color.BEIGE]: '#d9c4a1',
-  [Color.TAN]: '#c79b6d',
-  [Color.BROWN]: '#7b4f28',
-  [Color.NAVY]: '#1f2f5d',
-  [Color.BLUE]: '#2f5ee5',
-  [Color.LIGHT_BLUE]: '#8cc8ff',
-  [Color.DARK_INDIGO]: '#2d2b55',
-  [Color.GREEN]: '#2e8b57',
-  [Color.OLIVE]: '#6b7b2b',
-  [Color.BURGUNDY]: '#7d1e3f',
-  [Color.RED]: '#c62828',
-  [Color.PINK]: '#e98ab7',
-  [Color.PURPLE]: '#6a4c93',
-  [Color.YELLOW]: '#f2c94c',
-  [Color.ORANGE]: '#f08c2b',
-  [Color.MULTI]:
-    'linear-gradient(135deg,#f94144 0%,#f3722c 20%,#f9c74f 40%,#90be6d 60%,#577590 80%,#9b5de5 100%)',
-  [Color.SILVER]: '#b8b8b8',
-  [Color.GOLD]: '#cfae34',
-  [Color.KHAKI]: '#9f9657',
-  [Color.RUST]: '#b14d1b',
-  [Color.DARK_TEAL]: '#0f5c63',
-};
