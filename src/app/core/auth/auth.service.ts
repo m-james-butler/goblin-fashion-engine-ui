@@ -1,33 +1,22 @@
 import { Injectable, inject } from '@angular/core';
-import {
-  AuthError,
-  GoogleAuthProvider,
-  User,
-  getIdToken,
-  onAuthStateChanged,
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  signOut,
-} from 'firebase/auth';
+import { AuthError, User } from 'firebase/auth';
 import { BehaviorSubject } from 'rxjs';
 
-import { auth } from '../firebase/firebase';
 import { environment } from '../../../environments/environments';
 import { AppLoggerService } from '../logging/app-logger.service';
+import { FirebaseAuthGatewayService } from './firebase-auth-gateway.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private readonly logger = inject(AppLoggerService);
+  private readonly firebaseAuthGateway = inject(FirebaseAuthGatewayService);
   private readonly userSubject = new BehaviorSubject<User | null>(null);
   readonly user$ = this.userSubject.asObservable();
-  private readonly googleProvider = new GoogleAuthProvider();
 
   constructor() {
-    this.googleProvider.setCustomParameters({ prompt: 'select_account' });
-
-    onAuthStateChanged(auth, (user) => {
+    this.firebaseAuthGateway.onAuthStateChanged((user) => {
       this.userSubject.next(user);
       this.logger.info('auth.state.changed', {
         isAuthenticated: Boolean(user),
@@ -47,7 +36,7 @@ export class AuthService {
       usedUsernameInput,
     });
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await this.firebaseAuthGateway.signInWithPassword(email, password);
       this.logger.info('auth.password.login.succeeded', {
         usedUsernameInput,
       });
@@ -63,7 +52,7 @@ export class AuthService {
   async loginWithGoogle(): Promise<void> {
     this.logger.info('auth.google.login.started');
     try {
-      await signInWithPopup(auth, this.googleProvider);
+      await this.firebaseAuthGateway.signInWithGoogle();
       this.logger.info('auth.google.login.succeeded');
     } catch (error) {
       this.logger.warn('auth.google.login.failed', {
@@ -74,14 +63,12 @@ export class AuthService {
   }
 
   async getCurrentUserIdToken(forceRefresh = false): Promise<string | null> {
-    const user = auth.currentUser;
-    if (!user) {
-      this.logger.debug('auth.token.requested.without.user', { forceRefresh });
-      return null;
-    }
-
     try {
-      const idToken = await getIdToken(user, forceRefresh);
+      const idToken = await this.firebaseAuthGateway.getCurrentUserIdToken(forceRefresh);
+      if (!idToken) {
+        this.logger.debug('auth.token.requested.without.user', { forceRefresh });
+        return null;
+      }
       this.logger.debug('auth.token.requested.succeeded', { forceRefresh });
       return idToken;
     } catch (error) {
@@ -95,7 +82,7 @@ export class AuthService {
 
   async logout(): Promise<void> {
     this.logger.info('auth.logout.started');
-    await signOut(auth);
+    await this.firebaseAuthGateway.signOut();
     this.logger.info('auth.logout.succeeded');
   }
 

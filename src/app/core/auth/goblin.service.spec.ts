@@ -55,4 +55,33 @@ describe('GoblinService', () => {
       defaultHoardId: 'HRD-001',
     });
   });
+
+  it('should fall back to email for display name when missing', async () => {
+    userSubject.next({
+      uid: 'GBL-002',
+      displayName: null,
+      email: 'fallback@goblin.fashion',
+    } as User);
+
+    const result = await firstValueFrom(service.getCurrentGoblin());
+
+    expect(result?.displayName).toBe('fallback@goblin.fashion');
+  });
+
+  it('should fall back to unnamed goblin when display name and email are missing', async () => {
+    userSubject.next({
+      uid: 'GBL-003',
+      displayName: null,
+      email: null,
+    } as User);
+
+    const result = await firstValueFrom(service.getCurrentGoblin());
+
+    expect(result).toEqual(
+      jasmine.objectContaining({
+        displayName: 'Unnamed Goblin',
+        email: undefined,
+      }),
+    );
+  });
 });
