@@ -239,8 +239,9 @@ export class HoardViewComponent implements OnInit {
       return;
     }
 
-    if (this.newShinyForm.contexts.length === 0) {
-      this.addErrorMessage = 'Select at least one context.';
+    const validationError = this.validateShinyForm(this.newShinyForm);
+    if (validationError) {
+      this.addErrorMessage = validationError;
       return;
     }
 
@@ -275,8 +276,9 @@ export class HoardViewComponent implements OnInit {
       return;
     }
 
-    if (this.editShinyForm.contexts.length === 0) {
-      this.editErrorMessage = 'Select at least one context.';
+    const validationError = this.validateShinyForm(this.editShinyForm);
+    if (validationError) {
+      this.editErrorMessage = validationError;
       return;
     }
 
@@ -459,15 +461,17 @@ export class HoardViewComponent implements OnInit {
   ): ShinyPatchRequestDto | null {
     const nonPatchFieldsChanged =
       this.normalizeText(existingShiny.name) !== this.normalizeText(form.name) ||
-      existingShiny.count !== form.count ||
+      existingShiny.count !== this.toRequiredNumber(form.count) ||
       existingShiny.category !== form.category ||
       this.normalizeText(existingShiny.subcategory) !== this.normalizeText(form.subcategory) ||
       existingShiny.layer !== form.layer ||
       !this.areStringArraysEqual(existingShiny.contexts, form.contexts) ||
       existingShiny.formality !== form.formality ||
       existingShiny.colorPrimary !== form.colorPrimary ||
-      this.normalizeEnumValue(existingShiny.colorSecondary) !== form.colorSecondary ||
-      this.normalizeEnumValue(existingShiny.pattern) !== form.pattern ||
+      this.normalizeEnumValue(existingShiny.colorSecondary) !==
+        this.normalizeEnumValue(form.colorSecondary) ||
+      this.normalizeEnumValue(existingShiny.pattern) !==
+        this.normalizeEnumValue(form.pattern) ||
       this.normalizeText(existingShiny.fabric) !== this.normalizeText(form.fabric) ||
       this.normalizeText(existingShiny.fit) !== this.normalizeText(form.fit) ||
       this.normalizeNumber(existingShiny.warmth) !== this.toOptionalNumber(form.warmth) ||
@@ -490,13 +494,13 @@ export class HoardViewComponent implements OnInit {
       patchPayload.includeInEngine = form.includeInEngine;
     }
 
-    const normalizedImagePath = form.imagePathPlaceholder.trim();
+    const normalizedImagePath = this.normalizeText(form.imagePathPlaceholder);
     const existingImagePath = existingShiny.imagePath ?? '';
     if (normalizedImagePath !== existingImagePath) {
       patchPayload.imagePath = normalizedImagePath;
     }
 
-    const normalizedNotes = form.notes.trim();
+    const normalizedNotes = this.normalizeText(form.notes);
     const existingNotes = existingShiny.notes ?? '';
     if (normalizedNotes !== existingNotes) {
       patchPayload.notes = normalizedNotes;
@@ -513,11 +517,11 @@ export class HoardViewComponent implements OnInit {
     return left.every((value, index) => value === right[index]);
   }
 
-  private normalizeText(value: string | undefined): string {
+  private normalizeText(value: string | null | undefined): string {
     return (value ?? '').trim();
   }
 
-  private normalizeEnumValue<T extends string>(value: T | undefined): '' | T {
+  private normalizeEnumValue<T extends string>(value: '' | T | null | undefined): '' | T {
     return value ?? '';
   }
 
@@ -536,8 +540,8 @@ export class HoardViewComponent implements OnInit {
     return String(value);
   }
 
-  private toUndefinedIfBlank(value: string): string | undefined {
-    const trimmedValue = value.trim();
+  private toUndefinedIfBlank(value: string | null | undefined): string | undefined {
+    const trimmedValue = (value ?? '').trim();
     return trimmedValue ? trimmedValue : undefined;
   }
 
@@ -559,8 +563,66 @@ export class HoardViewComponent implements OnInit {
     return Number.isFinite(parsedValue) ? parsedValue : undefined;
   }
 
-  private toOptionalEnumValue<T extends string>(value: '' | T): T | undefined {
+  private toRequiredNumber(value: string | number | null | undefined): number | undefined {
+    return this.toOptionalNumber(value);
+  }
+
+  private hasPresentValue(value: string | number | null | undefined): boolean {
+    if (value === null || value === undefined) {
+      return false;
+    }
+
+    return typeof value === 'number' || value.trim().length > 0;
+  }
+
+  private toOptionalEnumValue<T extends string>(value: '' | T | null | undefined): T | undefined {
     return value || undefined;
+  }
+
+  private validateShinyForm(form: ShinyFormModel): string | null {
+    const requiredFields: Array<{ label: string; value: string | number | null | undefined }> = [
+      { label: 'Category', value: form.category },
+      { label: 'Layer', value: form.layer },
+      { label: 'Formality', value: form.formality },
+      { label: 'Attention', value: form.attention },
+      { label: 'Primary colour', value: form.colorPrimary },
+      { label: 'Engine policy', value: form.engineInclusionPolicy },
+      { label: 'Status', value: form.status },
+    ];
+
+    const missingRequiredField = requiredFields.find(
+      (field) => !this.hasPresentValue(field.value),
+    );
+    if (missingRequiredField) {
+      return `${missingRequiredField.label} is required.`;
+    }
+
+    const count = this.toRequiredNumber(form.count);
+    if (count === undefined) {
+      return 'Count is required.';
+    }
+    if (!Number.isInteger(count)) {
+      return 'Count must be a whole number.';
+    }
+    if (count < 1) {
+      return 'Count must be at least 1.';
+    }
+
+    if (form.contexts.length === 0) {
+      return 'Select at least one context.';
+    }
+
+    if (this.hasPresentValue(form.warmth)) {
+      const warmth = this.toOptionalNumber(form.warmth);
+      if (warmth === undefined) {
+        return 'Warmth must be a number.';
+      }
+      if (warmth < 0 || warmth > 10) {
+        return 'Warmth must be between 0 and 10.';
+      }
+    }
+
+    return null;
   }
 
   private buildShinyPayload(form: ShinyFormModel, id: string): ShinyCreateRequestDto {
@@ -568,7 +630,7 @@ export class HoardViewComponent implements OnInit {
       id,
       name: this.toUndefinedIfBlank(form.name),
       notes: this.toUndefinedIfBlank(form.notes),
-      count: form.count,
+      count: this.toRequiredNumber(form.count) ?? 1,
       category: form.category,
       subcategory: this.toUndefinedIfBlank(form.subcategory),
       layer: form.layer,
@@ -643,12 +705,35 @@ export class HoardViewComponent implements OnInit {
   }
 
   private createNewShinyId(): string {
+    const existingIds = new Set(this.shinies.map((shiny) => shiny.id));
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const candidateId = this.createCandidateShinyId(attempt);
+      if (!existingIds.has(candidateId)) {
+        return candidateId;
+      }
+    }
+
+    return this.createTimestampShinyId(existingIds);
+  }
+
+  private createCandidateShinyId(attempt: number): string {
     const randomUuid = globalThis.crypto?.randomUUID?.();
     if (randomUuid) {
       return randomUuid;
     }
 
-    return `shiny-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
+    return `shiny-${Date.now()}-${attempt}-${Math.floor(Math.random() * 1_000_000)}`;
+  }
+
+  private createTimestampShinyId(existingIds: ReadonlySet<string>): string {
+    let attempt = 0;
+    let candidateId = '';
+    do {
+      candidateId = `shiny-${Date.now()}-${attempt}`;
+      attempt += 1;
+    } while (existingIds.has(candidateId));
+
+    return candidateId;
   }
 
   getColorPresentation(color: Color | undefined): ColorPresentation {

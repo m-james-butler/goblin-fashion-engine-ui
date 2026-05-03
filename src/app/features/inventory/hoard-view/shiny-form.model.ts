@@ -13,7 +13,7 @@ import {
 export interface ShinyFormModel {
   name: string;
   notes: string;
-  count: number;
+  count: number | string | null;
   category: ShinyCategory;
   subcategory: string;
   layer: Layer;

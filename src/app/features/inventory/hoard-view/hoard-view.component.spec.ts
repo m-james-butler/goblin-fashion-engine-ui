@@ -315,6 +315,105 @@ describe('HoardViewComponent', () => {
     expect(component.isAddModalOpen).toBeFalse();
   });
 
+  it('blocks create when required shiny fields are missing', () => {
+    hoardServiceSpy.getShiniesForCurrentHoard.and.returnValue(of([createShiny()]));
+
+    fixture.detectChanges();
+    component.openAddShinyModal();
+    component.newShinyForm = {
+      ...component.newShinyForm,
+      category: '' as ShinyCategory,
+    };
+
+    component.submitNewShiny();
+
+    expect(hoardServiceSpy.createShinyForCurrentHoard).not.toHaveBeenCalled();
+    expect(component.addErrorMessage).toBe('Category is required.');
+  });
+
+  it('generates a replacement id when a new shiny id would duplicate an existing shiny', () => {
+    const duplicateId = '11111111-1111-4111-8111-111111111111';
+    const uniqueId = '22222222-2222-4222-8222-222222222222';
+    hoardServiceSpy.getShiniesForCurrentHoard.and.returnValue(
+      of([createShiny({ id: duplicateId })]),
+    );
+    spyOn(globalThis.crypto, 'randomUUID').and.returnValues(duplicateId, uniqueId);
+
+    fixture.detectChanges();
+    component.openAddShinyModal();
+
+    component.submitNewShiny();
+
+    const submittedPayload = hoardServiceSpy.createShinyForCurrentHoard.calls.mostRecent()
+      .args[0] as ShinyCreateRequestDto;
+    expect(submittedPayload.id).toBe(uniqueId);
+  });
+
+  it('normalizes blank optional values and coerces numeric strings before create', () => {
+    hoardServiceSpy.getShiniesForCurrentHoard.and.returnValue(of([createShiny()]));
+
+    fixture.detectChanges();
+    component.openAddShinyModal();
+    component.newShinyForm = {
+      ...component.newShinyForm,
+      name: '  ',
+      notes: '',
+      count: '2',
+      subcategory: '  ',
+      fabric: '',
+      fit: '  ',
+      warmth: ' 7 ',
+      imagePathPlaceholder: '',
+    };
+
+    component.submitNewShiny();
+
+    const submittedPayload = hoardServiceSpy.createShinyForCurrentHoard.calls.mostRecent()
+      .args[0] as ShinyCreateRequestDto;
+    expect(submittedPayload.count).toBe(2);
+    expect(submittedPayload.warmth).toBe(7);
+    expect(submittedPayload.name).toBeUndefined();
+    expect(submittedPayload.notes).toBeUndefined();
+    expect(submittedPayload.subcategory).toBeUndefined();
+    expect(submittedPayload.fabric).toBeUndefined();
+    expect(submittedPayload.fit).toBeUndefined();
+    expect(submittedPayload.imagePath).toBeUndefined();
+  });
+
+  it('blocks create when numeric values are outside supported bounds', () => {
+    hoardServiceSpy.getShiniesForCurrentHoard.and.returnValue(of([createShiny()]));
+
+    fixture.detectChanges();
+    component.openAddShinyModal();
+    component.newShinyForm = {
+      ...component.newShinyForm,
+      count: '0',
+      warmth: '11',
+    };
+
+    component.submitNewShiny();
+
+    expect(hoardServiceSpy.createShinyForCurrentHoard).not.toHaveBeenCalled();
+    expect(component.addErrorMessage).toBe('Count must be at least 1.');
+  });
+
+  it('blocks create when warmth is outside supported bounds', () => {
+    hoardServiceSpy.getShiniesForCurrentHoard.and.returnValue(of([createShiny()]));
+
+    fixture.detectChanges();
+    component.openAddShinyModal();
+    component.newShinyForm = {
+      ...component.newShinyForm,
+      count: 1,
+      warmth: '11',
+    };
+
+    component.submitNewShiny();
+
+    expect(hoardServiceSpy.createShinyForCurrentHoard).not.toHaveBeenCalled();
+    expect(component.addErrorMessage).toBe('Warmth must be between 0 and 10.');
+  });
+
   it('deletes selected shiny from detail modal after confirmation', () => {
     const shinyToDelete = createShiny({ id: 'delete-me', name: 'Delete Me' });
     hoardServiceSpy.getShiniesForCurrentHoard.and.returnValue(of([shinyToDelete]));
